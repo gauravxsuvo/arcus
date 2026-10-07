@@ -1,0 +1,2966 @@
+# WORKOUT APP — MASTER ENGINEERING & PRODUCT SPEC
+
+you are the lead product engineer, frontend engineer, backend engineer, database architect, ux designer, and qa engineer for this project.
+
+you are building a production-quality fitness application inspired by modern workout loggers such as hevy, but the product must **not** be a superficial clone.
+
+the goal is to create a significantly more capable training platform focused on:
+
+> extremely fast workout logging + deep training analytics + intelligent progression + programming + physique tracking + excellent offline support
+
+this is a real application, not a visual prototype.
+
+do not create fake functionality.
+
+do not leave buttons that do nothing.
+
+do not substitute placeholder arrays for real application state once the relevant backend/data layer exists.
+
+when you make an engineering decision, choose the simplest production-appropriate solution and document major decisions in `ARCHITECTURE.md`.
+
+---
+
+# 1. PRODUCT POSITIONING
+
+the product should feel like:
+
+> a training operating system, not merely a workout diary
+
+the core user journey is:
+
+```text
+open app
+↓
+see today's workout
+↓
+start workout
+↓
+log sets with minimal interaction
+↓
+finish workout
+↓
+immediately understand performance
+↓
+use historical data to improve the next session
+```
+
+the app must be:
+
+* fast
+* premium
+* clean
+* information-dense when necessary
+* minimal during active workouts
+* powerful outside workouts
+* mobile-first
+* responsive on desktop
+* installable as a pwa
+* offline-capable
+* accessible
+* secure
+* extensible
+
+do not sacrifice usability just to add features.
+
+---
+
+# 2. PRIMARY TECHNOLOGY STACK
+
+use the following architecture unless there is a compelling technical reason to change something.
+
+## frontend
+
+* next.js
+* typescript
+* react
+* app router
+* server components where appropriate
+* client components only where interactivity/state requires them
+* tailwind css
+* shadcn/ui
+* lucide-react
+* zustand
+* react-hook-form
+* zod
+* recharts or an appropriate charting library
+* date-fns
+
+## backend
+
+* supabase
+* postgresql
+* supabase auth
+* supabase storage
+* row level security
+* server-side route handlers / server actions where appropriate
+
+## deployment
+
+design for:
+
+* vercel
+* supabase
+
+the project must work in local development before deployment.
+
+---
+
+# 3. PWA REQUIREMENT
+
+the app must behave as a high-quality installable pwa.
+
+support:
+
+* installability
+* app icon
+* splash/loading experience
+* responsive layouts
+* offline shell
+* cached static assets
+* reliable navigation while offline
+* local workout persistence
+* synchronization after connection returns
+
+the active workout must remain usable during temporary internet loss.
+
+do not make the user lose their workout because the network disappeared.
+
+---
+
+# 4. MOST IMPORTANT PRODUCT PRINCIPLE
+
+## LOGGING SPEED
+
+the single most important screen is the active workout screen.
+
+the application should optimize for:
+
+> one-handed use in a gym with minimal cognitive load
+
+normal set logging should require very few taps.
+
+the user should immediately see:
+
+* exercise
+* previous performance
+* current set
+* weight
+* reps
+* rpe/r ir if enabled
+* completion
+* rest timer
+
+do not force the user through a modal for every action.
+
+---
+
+# 5. VISUAL DESIGN DIRECTION
+
+use shadcn/ui as the primitive design system, but **do not make the final product look like a default shadcn demo**.
+
+build a distinctive fitness product on top of it.
+
+use:
+
+* strong typography
+* clear hierarchy
+* dense but readable workout interfaces
+* rounded but restrained cards
+* subtle borders
+* subtle shadows
+* strong dark mode
+* smooth transitions
+* clear active/inactive states
+
+avoid:
+
+* generic saas dashboards
+* excessive gradients
+* giant hero sections
+* unnecessary glassmorphism
+* huge empty spaces in workout screens
+* excessive decorative animations
+* cluttered card grids
+
+---
+
+# 6. SHADCN/UI ARCHITECTURE
+
+use shadcn/ui for reusable primitives such as:
+
+```text
+Button
+Card
+Badge
+Input
+Textarea
+Select
+Checkbox
+Switch
+Tabs
+Dialog
+Drawer
+Sheet
+Tooltip
+Popover
+DropdownMenu
+Command
+AlertDialog
+Separator
+Progress
+ScrollArea
+Skeleton
+Toast / Sonner
+```
+
+do not duplicate primitives.
+
+for example:
+
+```text
+components/ui/button.tsx
+```
+
+should be the base button component.
+
+then build application-specific components on top.
+
+---
+
+# 7. COMPONENT ARCHITECTURE
+
+use this general structure:
+
+```text
+src/
+  app/
+  components/
+    ui/
+    layout/
+    workout/
+    exercises/
+    programs/
+    analytics/
+    physique/
+    profile/
+    shared/
+  features/
+    workouts/
+    exercises/
+    programs/
+    analytics/
+    physique/
+    profile/
+  lib/
+    supabase/
+    db/
+    analytics/
+    progression/
+    prs/
+    sync/
+    validation/
+    utils/
+  stores/
+  hooks/
+  types/
+  constants/
+```
+
+application-specific components should be reusable.
+
+example:
+
+```text
+components/workout/ExerciseCard.tsx
+components/workout/SetRow.tsx
+components/workout/RestTimer.tsx
+components/workout/ExercisePicker.tsx
+components/workout/WorkoutHeader.tsx
+components/workout/WorkoutSummary.tsx
+```
+
+---
+
+# 8. DO NOT CREATE MONOLITHIC COMPONENTS
+
+avoid:
+
+```text
+WorkoutPage.tsx
+```
+
+containing:
+
+* database logic
+* calculations
+* timer
+* forms
+* analytics
+* all rendering
+* state management
+
+instead separate responsibilities.
+
+for example:
+
+```text
+WorkoutPage
+ ├── WorkoutHeader
+ ├── WorkoutStats
+ ├── ExerciseList
+ │    └── ExerciseCard
+ │         ├── ExerciseHeader
+ │         ├── PreviousPerformance
+ │         ├── SetList
+ │         │    └── SetRow
+ │         └── ExerciseActions
+ └── WorkoutFooter
+```
+
+---
+
+# 9. NEXT.JS ROUTING
+
+use app router route groups.
+
+suggested structure:
+
+```text
+src/app/
+
+  (auth)/
+    login/
+    signup/
+    onboarding/
+
+  (app)/
+    dashboard/
+    workout/
+    history/
+    exercises/
+    programs/
+    progress/
+    profile/
+    settings/
+
+  api/
+    ai/
+    sync/
+```
+
+adjust routes when appropriate.
+
+the route structure must remain intuitive.
+
+---
+
+# 10. CORE NAVIGATION
+
+primary navigation:
+
+```text
+dashboard
+workout
+programs
+history
+progress
+profile
+```
+
+use a mobile bottom navigation where appropriate.
+
+on desktop, use a sidebar navigation.
+
+responsive behavior should feel intentionally designed rather than simply compressed.
+
+---
+
+# 11. ACTIVE WORKOUT PRIORITY
+
+when a workout is active:
+
+* surface it prominently
+* allow quick resume
+* preserve state on refresh
+* preserve state after tab closure where technically possible
+* preserve state offline
+* warn before destructive actions
+
+never accidentally erase an active workout because the user navigated away.
+
+---
+
+# 12. ONBOARDING
+
+create real onboarding.
+
+collect:
+
+## profile
+
+* name
+* age
+* sex
+* height
+* bodyweight
+
+## experience
+
+* beginner
+* intermediate
+* advanced
+
+## goals
+
+multiple selection:
+
+* muscle gain
+* strength
+* fat loss
+* general fitness
+* bodybuilding
+* powerlifting
+* athletic performance
+
+## training preferences
+
+* training days/week
+* typical session duration
+* available equipment
+* preferred exercises
+* disliked exercises
+
+all fields should be appropriately optional.
+
+do not make users enter information that is not required.
+
+---
+
+# 13. DASHBOARD
+
+dashboard should answer:
+
+> what should i do today?
+
+sections:
+
+### today's training
+
+show:
+
+* scheduled workout
+* training focus
+* expected duration
+* exercise count
+* start button
+
+### active workout
+
+if active:
+
+* workout name
+* elapsed time
+* progress
+* resume button
+
+### quick actions
+
+* start empty workout
+* start from template
+* add exercise
+* log bodyweight
+
+### recent performance
+
+show a small number of useful insights:
+
+* workouts this week
+* weekly volume
+* current bodyweight
+* PRs
+* streak
+
+do not turn the dashboard into an analytics dump.
+
+---
+
+# 14. EXERCISE DATABASE
+
+create a real exercise database.
+
+each exercise should support:
+
+```text
+id
+name
+slug
+aliases
+description
+instructions
+primary_muscle
+secondary_muscles
+movement_pattern
+equipment
+difficulty
+default_rep_range
+default_rest_seconds
+is_system_exercise
+created_by
+is_archived
+created_at
+updated_at
+```
+
+muscle data should be normalized.
+
+---
+
+# 15. MUSCLE MODEL
+
+support at minimum:
+
+```text
+chest
+upper chest
+lats
+upper back
+traps
+front delts
+side delts
+rear delts
+biceps
+triceps
+forearms
+abs
+obliques
+erectors
+quads
+hamstrings
+glutes
+calves
+adductors
+```
+
+an exercise may contribute to multiple muscles.
+
+where useful, store contribution weights.
+
+example:
+
+```text
+barbell bench press
+chest = 1.0
+front delts = 0.5
+triceps = 0.5
+```
+
+document the methodology.
+
+do not imply that these contribution values are objective physiological measurements.
+
+they are an analytics model.
+
+---
+
+# 16. EXERCISE SEARCH
+
+exercise selection must be fast.
+
+support:
+
+* exact search
+* partial search
+* alias search
+* favorites
+* recent exercises
+* equipment filtering
+* muscle filtering
+* movement filtering
+* user-created exercises
+
+search examples:
+
+```text
+rdl
+romanian deadlift
+stiff leg deadlift
+```
+
+should return related entries.
+
+use deterministic search first.
+
+do not use an llm just to search the exercise database.
+
+---
+
+# 17. FAVORITES + RECENTS
+
+the exercise picker should prioritize:
+
+1. recently used
+2. favorites
+3. frequently used
+4. full searchable database
+
+this minimizes friction during workouts.
+
+---
+
+# 18. WORKOUT DATA MODEL
+
+create normalized relational data.
+
+at minimum:
+
+```text
+workouts
+workout_exercises
+sets
+```
+
+a workout should contain:
+
+```text
+id
+user_id
+name
+started_at
+completed_at
+duration_seconds
+status
+notes
+template_id
+program_day_id
+created_at
+updated_at
+```
+
+a workout exercise should contain:
+
+```text
+id
+workout_id
+exercise_id
+order_index
+notes
+rest_seconds
+superset_group_id
+```
+
+a set should contain:
+
+```text
+id
+workout_exercise_id
+set_index
+weight
+reps
+rpe
+rir
+set_type
+is_completed
+is_warmup
+is_failure
+is_assisted
+is_paused
+is_drop_set
+is_rest_pause
+notes
+completed_at
+created_at
+updated_at
+```
+
+do not store all sets as one opaque json blob.
+
+analytics requires proper relational data.
+
+---
+
+# 19. SET TYPES
+
+support:
+
+```text
+working
+warmup
+drop_set
+failure
+assisted
+paused
+partial
+rest_pause
+```
+
+advanced modes should never complicate basic logging.
+
+default ui should be simple.
+
+---
+
+# 20. SET ROW COMPONENT
+
+create a highly reusable:
+
+```text
+SetRow
+```
+
+visual structure:
+
+```text
+┌─────┬────────┬──────┬──────┬─────┐
+│ set │ weight │ reps │ rpe  │  ✓  │
+├─────┼────────┼──────┼──────┼─────┤
+│  1  │  70    │  8   │  8   │  ✓  │
+│  2  │  70    │  7   │  9   │  ✓  │
+│  3  │  67.5  │  8   │  9   │  ○  │
+└─────┴────────┴──────┴──────┴─────┘
+```
+
+the component must support:
+
+* keyboard input on desktop
+* touch input on mobile
+* editing
+* completion
+* warmup indicator
+* set duplication
+* deletion
+* context actions
+
+---
+
+# 21. PREVIOUS PERFORMANCE
+
+when the user opens an exercise during an active workout, show the most relevant previous session.
+
+example:
+
+```text
+LAST TIME
+
+70 kg × 7 @ 8
+70 kg × 6 @ 9
+67.5 kg × 8 @ 9
+```
+
+also support:
+
+```text
+best
+last session
+best estimated 1rm
+best 5 rep set
+best 8 rep set
+best 10 rep set
+```
+
+previous performance must load quickly.
+
+---
+
+# 22. QUICK ACTIONS
+
+implement fast actions:
+
+* repeat previous set
+* copy previous exercise
+* add set
+* duplicate set
+* mark complete
+* undo completion
+* reorder exercise
+* remove exercise
+
+use intuitive keyboard shortcuts on desktop where helpful.
+
+---
+
+# 23. REST TIMER
+
+build a global rest timer.
+
+requirements:
+
+* automatic start after completed set
+* configurable default rest
+* exercise-specific rest
+* pause
+* skip
+* +15 seconds
+* -15 seconds
+* sound
+* vibration where available
+* progress indicator
+* persistent mini timer
+
+do not block normal logging while timer is running.
+
+---
+
+# 24. WORKOUT HEADER
+
+during the active workout show:
+
+```text
+workout name
+elapsed time
+exercise progress
+total sets
+```
+
+actions:
+
+* add exercise
+* workout notes
+* settings
+* finish
+* cancel
+
+destructive actions require confirmation.
+
+---
+
+# 25. WORKOUT COMPLETION
+
+completion screen must show:
+
+```text
+workout complete
+
+duration
+total sets
+total reps
+total volume
+prs
+average rpe
+muscles trained
+comparison with previous comparable session
+```
+
+example:
+
+```text
+1h 07m
+
+18 sets
+142 reps
+8,450 kg volume
+
+3 prs
+
++6% volume vs previous session
+```
+
+numbers must come from actual recorded data.
+
+---
+
+# 26. WORKOUT HISTORY
+
+history page:
+
+* chronological list
+* date grouping
+* search
+* filters
+* workout details
+* exercise details
+
+filters:
+
+* date
+* workout type
+* exercise
+* muscle group
+* duration
+
+support pagination or virtualized lists where useful.
+
+---
+
+# 27. EXERCISE HISTORY
+
+each exercise page should show:
+
+* total sessions
+* best set
+* best estimated 1rm
+* volume trend
+* strength trend
+* rep trend
+* PR history
+
+time ranges:
+
+```text
+1m
+3m
+6m
+1y
+all
+```
+
+charts should remain readable on mobile.
+
+---
+
+# 28. PERSONAL RECORD ENGINE
+
+automatically detect:
+
+* weight PR
+* rep PR
+* estimated 1rm PR
+* volume PR
+
+PR calculations must be deterministic.
+
+show a clear distinction between:
+
+```text
+tested 1rm
+estimated 1rm
+rep PR
+```
+
+do not call an estimated 1rm an actual 1rm.
+
+---
+
+# 29. 1RM ENGINE
+
+implement multiple recognized estimation formulas.
+
+minimum:
+
+* epley
+* brzycki
+* lander
+* lombardi
+
+allow the user to choose the preferred formula.
+
+put calculations in:
+
+```text
+lib/analytics/oneRepMax.ts
+```
+
+with unit tests.
+
+---
+
+# 30. PROGRESSION ENGINE
+
+create a deterministic progression engine.
+
+support:
+
+## double progression
+
+example:
+
+```text
+target = 8–12
+
+10
+11
+12
+```
+
+recommend increasing load next session.
+
+if:
+
+```text
+8
+9
+8
+```
+
+recommend maintaining.
+
+## rpe/r ir progression
+
+use recent performance to make conservative recommendations.
+
+## percentage progression
+
+support:
+
+* percentage of estimated 1rm
+* percentage of training max
+* fixed increments
+
+## manual progression
+
+user-defined progression rules.
+
+every recommendation should include a reason.
+
+example:
+
+```text
+increase to 72.5 kg next session
+
+reason:
+you reached the top of your target rep range
+across all prescribed working sets
+```
+
+do not expose arbitrary unexplained model outputs.
+
+---
+
+# 31. PROGRAMS
+
+build a proper program system:
+
+```text
+program
+ └── weeks
+      └── days
+           └── exercises
+                ├── sets
+                ├── reps
+                ├── rpe/r ir
+                ├── rest
+                └── progression rule
+```
+
+support:
+
+* custom programs
+* templates
+* repeating weeks
+* deload weeks
+* exercise substitution
+* progression settings
+* duplication
+* editing
+
+---
+
+# 32. PROGRAM BUILDER
+
+create a mobile-friendly builder.
+
+users should be able to:
+
+* add week
+* duplicate week
+* add day
+* rename day
+* add exercise
+* reorder exercises
+* configure sets
+* configure reps
+* configure rpe/r ir
+* configure rest
+* configure progression
+* duplicate exercise
+* duplicate day
+
+use drag/drop on desktop where useful.
+
+provide touch-friendly controls on mobile.
+
+---
+
+# 33. EXERCISE SUBSTITUTION SYSTEM
+
+support replacing an unavailable exercise.
+
+example:
+
+```text
+barbell bench unavailable
+```
+
+show appropriate alternatives based on:
+
+* primary muscle
+* movement pattern
+* equipment
+* user preferences
+
+example:
+
+```text
+dumbbell bench
+smith machine bench
+machine chest press
+```
+
+don't randomly substitute an unrelated exercise.
+
+---
+
+# 34. PROGRAM GENERATOR
+
+create an optional intelligent program generator.
+
+inputs:
+
+* experience
+* goal
+* training days
+* session duration
+* equipment
+* emphasis muscles
+
+output:
+
+* weekly structure
+* exercises
+* sets
+* reps
+* progression approach
+* rest
+
+show the assumptions used.
+
+do not claim it provides individualized medical or professional coaching.
+
+---
+
+# 35. PROGRESS DASHBOARD
+
+progress should have multiple sections.
+
+## consistency
+
+* workouts/week
+* streak
+* completed vs missed sessions
+* average duration
+
+## strength
+
+* estimated 1rm trends
+* tested PRs
+* exercise PRs
+
+## volume
+
+* weekly volume
+* monthly volume
+* rolling 4-week volume
+* muscle-group volume
+
+## frequency
+
+* sessions per muscle
+* days between exposures
+
+## effort
+
+* average rpe
+* average rir where available
+
+---
+
+# 36. MUSCLE VOLUME ANALYTICS
+
+aggregate volume and sets by muscle.
+
+support:
+
+```text
+weekly
+monthly
+rolling 4 weeks
+rolling 8 weeks
+```
+
+example:
+
+```text
+chest       12 sets
+back        16 sets
+quads        9 sets
+hamstrings   8 sets
+```
+
+do not treat warmups as equivalent to hard working sets.
+
+the methodology should be documented.
+
+---
+
+# 37. PLATEAU DETECTION
+
+detect possible plateaus only when sufficient data exists.
+
+for example:
+
+```text
+possible plateau
+
+bench press has shown no meaningful improvement
+across the last 5 comparable sessions
+```
+
+show supporting evidence.
+
+never declare a plateau based on one or two bad sessions.
+
+avoid overly confident language.
+
+---
+
+# 38. FATIGUE / READINESS SYSTEM
+
+implement a transparent training heuristic.
+
+possible inputs:
+
+* recent training volume
+* frequency
+* recent rpe
+* workout duration
+* sleep input
+* subjective soreness
+* subjective energy
+
+output something like:
+
+```text
+readiness
+moderate
+```
+
+and:
+
+```text
+recent lower-body training load is elevated
+consider maintaining your current load today
+```
+
+this is a training heuristic.
+
+do not market it as a medical measurement or scientifically exact recovery score.
+
+---
+
+# 39. DELOAD SYSTEM
+
+support:
+
+* manual deload
+* scheduled deload
+* program-defined deload
+* conservative suggested deload
+
+never force a deload.
+
+show why a suggestion was generated.
+
+---
+
+# 40. PLATE CALCULATOR
+
+build a proper plate calculator.
+
+inputs:
+
+* target weight
+* bar weight
+* available plates
+* unit
+
+output per side.
+
+example:
+
+```text
+target: 100 kg
+
+per side:
+20
+15
+10
+5
+```
+
+support custom plate inventories.
+
+if the exact target isn't achievable:
+
+```text
+100 kg unavailable
+nearest achievable: 97.5 kg
+```
+
+---
+
+# 41. SUPERSETS / GIANT SETS
+
+support:
+
+* supersets
+* giant sets
+* circuits
+* alternating exercises
+
+example:
+
+```text
+A1 incline dumbbell press
+A2 cable fly
+```
+
+the active workout flow must understand the grouping.
+
+---
+
+# 42. BODYWEIGHT TRACKING
+
+support:
+
+* daily bodyweight
+* weekly average
+* rolling average
+* trend
+* target weight
+* rate of change
+
+show trend instead of overreacting to daily fluctuations.
+
+---
+
+# 43. BODY MEASUREMENTS
+
+support:
+
+* waist
+* chest
+* arms
+* thighs
+* calves
+* neck
+* shoulders
+* custom measurements
+
+all measurements are timestamped.
+
+display trends.
+
+---
+
+# 44. PROGRESS PHOTOS
+
+support:
+
+* front
+* side
+* back
+* custom photo
+
+photos must be private by default.
+
+store securely using supabase storage.
+
+users must explicitly choose to share them.
+
+do not expose private photo urls publicly.
+
+---
+
+# 45. NUTRITION MODULE
+
+nutrition should remain secondary to workout logging.
+
+support simple tracking:
+
+* calorie target
+* protein target
+* carb target
+* fat target
+* optional meal entries
+
+do not build a giant food database in version one.
+
+the application must remain fully useful without nutrition logging.
+
+---
+
+# 46. NOTES
+
+support notes at three levels:
+
+```text
+workout note
+exercise note
+set note
+```
+
+allow searching historical notes.
+
+---
+
+# 47. CUSTOM EXERCISES
+
+users can create exercises.
+
+required:
+
+* name
+* muscles
+* equipment
+* movement pattern
+
+custom exercises must work with:
+
+* history
+* analytics
+* PRs
+* progression
+* programs
+
+---
+
+# 48. SETTINGS
+
+support:
+
+* kg / lb
+* 12 / 24 hour
+* dark / light / system
+* default rest
+* rpe visibility
+* rir visibility
+* auto-start timer
+* sound
+* vibration
+* compact workout mode
+* notification settings
+
+---
+
+# 49. SOCIAL FEATURES
+
+social is optional and secondary.
+
+possible features:
+
+* profile
+* friends
+* following
+* workout sharing
+* PR sharing
+* feed
+* reactions
+* challenges
+* public workouts
+
+everything should be private by default.
+
+do not require social participation.
+
+---
+
+# 50. AI ARCHITECTURE
+
+AI should enhance the application, not become the foundation.
+
+do NOT use ai for deterministic tasks.
+
+do not call ai to:
+
+* calculate volume
+* calculate 1rm
+* detect a PR
+* start a rest timer
+* save a set
+* retrieve basic history
+* calculate bodyweight trends
+
+those must be normal application logic.
+
+---
+
+# 51. AI WORKOUT ANALYSIS
+
+optional ai-generated analysis after workouts.
+
+provide structured data to the model, such as:
+
+```text
+workout duration
+total sets
+volume
+rpe
+previous comparable session
+prs
+exercise performance
+```
+
+ai may generate a concise summary.
+
+example:
+
+```text
+your pressing performance was stable today while
+total volume increased compared with your previous session
+```
+
+the ai must not invent statistics.
+
+---
+
+# 52. AI NATURAL LANGUAGE QUERY
+
+allow users to ask questions such as:
+
+```text
+how has my bench improved in the last 3 months?
+
+what muscle groups am i training the least?
+
+what exercises have stalled?
+
+what was my best squat session?
+```
+
+the system must retrieve real structured data first.
+
+do not let the model hallucinate data.
+
+architecture:
+
+```text
+user question
+↓
+intent extraction
+↓
+structured database query
+↓
+validated data
+↓
+ai interpretation
+↓
+response
+```
+
+---
+
+# 53. AI NATURAL-LANGUAGE ACTIONS
+
+support commands such as:
+
+```text
+add 3 sets of lateral raises after shoulder press
+```
+
+but do not immediately mutate data blindly.
+
+convert language into a structured action.
+
+validate it.
+
+then apply it.
+
+example:
+
+```ts
+{
+  action: "add_exercise",
+  exercise: "lateral_raise",
+  sets: 3,
+  position: "after:shoulder_press"
+}
+```
+
+---
+
+# 54. LOCAL-FIRST DATA MODEL
+
+the user must be able to:
+
+* open a workout offline
+* create a workout offline
+* add exercises offline
+* log sets offline
+* finish workout offline
+* view recent history offline
+
+when internet returns:
+
+```text
+local changes
+↓
+sync queue
+↓
+server synchronization
+↓
+conflict resolution
+↓
+mark synchronized
+```
+
+---
+
+# 55. SYNCHRONIZATION
+
+create a proper sync mechanism.
+
+include metadata such as:
+
+```text
+created_at
+updated_at
+deleted_at
+version
+sync_status
+```
+
+where appropriate.
+
+support:
+
+* retry
+* idempotent operations
+* conflict handling
+* deletion sync
+* network recovery
+
+do not silently overwrite newer data.
+
+---
+
+# 56. DATABASE SCHEMA
+
+create a normalized postgresql schema.
+
+minimum tables:
+
+```text
+profiles
+
+muscles
+equipment
+exercises
+exercise_muscles
+
+workout_templates
+workout_template_exercises
+
+workouts
+workout_exercises
+sets
+
+programs
+program_weeks
+program_days
+program_exercises
+
+personal_records
+
+bodyweight_entries
+body_measurements
+progress_photos
+
+goals
+user_settings
+
+favorites
+exercise_history
+
+sync_queue
+
+notifications
+
+subscriptions
+```
+
+add more tables when justified.
+
+use foreign keys.
+
+use indexes.
+
+use constraints.
+
+use timestamps.
+
+use soft deletion where historical integrity requires it.
+
+---
+
+# 57. HISTORICAL DATA INTEGRITY
+
+this is mandatory.
+
+if a user:
+
+* renames an exercise
+* archives an exercise
+* deletes a custom exercise
+
+historical workouts must remain readable.
+
+do not let historical sessions become:
+
+```text
+unknown exercise
+```
+
+unless absolutely unavoidable.
+
+preserve references and snapshots where necessary.
+
+---
+
+# 58. SUPABASE AUTH
+
+support:
+
+* email/password
+* session persistence
+* logout
+* password reset
+
+design the auth layer so additional providers can be added later.
+
+never expose service-role credentials to the browser.
+
+---
+
+# 59. ROW LEVEL SECURITY
+
+implement row-level security.
+
+a user should only be able to access their own private data.
+
+private data includes:
+
+* workouts
+* sets
+* bodyweight
+* measurements
+* photos
+* goals
+* settings
+* personal notes
+
+system exercise catalog can be readable.
+
+custom exercises belong to their creator.
+
+do not rely on frontend checks for security.
+
+---
+
+# 60. FILE STORAGE
+
+progress photos go into a secured storage bucket.
+
+use:
+
+* private bucket
+* authenticated access
+* signed urls where necessary
+
+never make private progress photos publicly addressable by default.
+
+---
+
+# 61. RESPONSIVE DESIGN
+
+the app must support:
+
+### mobile
+
+optimized for:
+
+```text
+360px+
+```
+
+### tablet
+
+### desktop
+
+desktop should provide:
+
+* sidebar
+* wider analytics layouts
+* split views where appropriate
+
+mobile should provide:
+
+* bottom nav
+* compact controls
+* full-width cards
+* bottom sheets/drawers
+
+---
+
+# 62. MOBILE WORKOUT MODE
+
+active workout should have a specialized mobile layout.
+
+priority:
+
+```text
+exercise name
+previous performance
+sets
+weight
+reps
+complete
+timer
+```
+
+keep secondary controls collapsed or accessible through secondary actions.
+
+---
+
+# 63. DESKTOP WORKOUT MODE
+
+desktop can use a wider layout.
+
+possible:
+
+```text
+left:
+exercise list
+
+center:
+current exercise
+
+right:
+workout summary / timer
+```
+
+but don't force complexity onto mobile.
+
+---
+
+# 64. ACCESSIBILITY
+
+support:
+
+* semantic html
+* keyboard navigation
+* focus states
+* screen-reader labels
+* accessible forms
+* strong contrast
+* non-color-only states
+* touch targets large enough for mobile
+* reduced motion support
+
+---
+
+# 65. ANIMATION
+
+use framer motion or an appropriate animation solution only where useful.
+
+animate:
+
+* exercise completion
+* PR celebration
+* drawer transitions
+* page transitions
+* timer changes
+
+do not animate everything.
+
+performance matters more than decoration.
+
+---
+
+# 66. PERFORMANCE
+
+optimize for:
+
+* fast initial render
+* fast route transitions
+* instant local state updates
+* minimal client javascript where possible
+* efficient queries
+* indexed database queries
+* lazy loading
+* pagination
+* image optimization
+
+use next/image for appropriate image assets.
+
+avoid unnecessary client components.
+
+---
+
+# 67. SERVER VS CLIENT COMPONENTS
+
+default to server components.
+
+use client components only when required for:
+
+* interactive forms
+* workout state
+* timers
+* drag/drop
+* gestures
+* charts
+* local state
+* browser APIs
+
+do not mark entire route trees as `"use client"` just because one component needs interactivity.
+
+---
+
+# 68. STATE MANAGEMENT
+
+use zustand for client state that benefits from centralized persistence.
+
+examples:
+
+* active workout state
+* timer
+* ui preferences
+* optimistic sync state
+
+do not put everything into zustand.
+
+server data belongs in the appropriate data-fetching/server architecture.
+
+---
+
+# 69. FORM VALIDATION
+
+use:
+
+```text
+react-hook-form
++
+zod
+```
+
+for substantial forms.
+
+validate:
+
+* weight
+* reps
+* rpe
+* measurements
+* profile values
+* program settings
+
+do not rely exclusively on database validation.
+
+---
+
+# 70. ANALYTICS ENGINE
+
+create pure reusable functions.
+
+examples:
+
+```ts
+calculateVolume()
+calculateEstimatedOneRepMax()
+calculateAverageRpe()
+calculateWeeklyVolume()
+calculateMuscleVolume()
+detectPersonalRecord()
+detectPlateau()
+calculateBodyweightTrend()
+calculateTrainingFrequency()
+generateProgressionRecommendation()
+calculatePlateBreakdown()
+```
+
+these must be independently testable.
+
+---
+
+# 71. ANALYTICS METHODOLOGY
+
+example:
+
+```text
+volume
+= sum(weight × reps)
+```
+
+for muscle analytics:
+
+```text
+muscle contribution
+= set volume × configured contribution weight
+```
+
+for frequency:
+
+```text
+number of relevant training exposures
+```
+
+keep methodologies documented.
+
+don't present estimates as objective physiological truth.
+
+---
+
+# 72. CHARTS
+
+charts should answer questions.
+
+use charts for:
+
+* weight trend
+* estimated 1rm trend
+* exercise volume
+* muscle volume
+* frequency
+* workout consistency
+
+do not create charts simply to make the app look analytical.
+
+provide useful tooltips and readable axes.
+
+---
+
+# 73. EMPTY STATES
+
+every major feature needs a useful empty state.
+
+examples:
+
+```text
+no workouts yet
+start your first workout
+
+no bodyweight data
+log your first weigh-in
+
+no prs yet
+your first personal record will appear here
+```
+
+avoid dead-end screens.
+
+---
+
+# 74. LOADING STATES
+
+use shadcn skeletons and appropriate loading states.
+
+don't show blank screens while queries run.
+
+---
+
+# 75. ERROR STATES
+
+handle:
+
+* network failure
+* auth failure
+* database errors
+* sync failures
+* invalid input
+* photo upload failure
+
+provide:
+
+* understandable message
+* retry where possible
+* preserve unsaved local data
+
+---
+
+# 76. TOASTS
+
+use toast notifications sparingly.
+
+good examples:
+
+```text
+set logged
+workout saved
+exercise added
+program updated
+sync complete
+```
+
+don't toast every tiny interaction.
+
+---
+
+# 77. CONFIRMATION UX
+
+require confirmation before destructive actions such as:
+
+* deleting workout
+* deleting exercise
+* abandoning active workout
+* removing historical data
+
+never use confirmation dialogs for harmless actions.
+
+---
+
+# 78. SEED DATABASE
+
+seed a broad system exercise database.
+
+include common:
+
+### chest
+
+* barbell bench press
+* incline barbell bench press
+* dumbbell bench press
+* incline dumbbell bench press
+* machine chest press
+* pec deck
+* cable fly
+* push-up
+
+### back
+
+* pull-up
+* chin-up
+* lat pulldown
+* barbell row
+* chest-supported row
+* cable row
+* one-arm dumbbell row
+
+### shoulders
+
+* overhead press
+* dumbbell shoulder press
+* machine shoulder press
+* lateral raise
+* cable lateral raise
+* reverse fly
+* face pull
+
+### arms
+
+* barbell curl
+* dumbbell curl
+* incline curl
+* hammer curl
+* cable curl
+* triceps pushdown
+* overhead cable extension
+* skull crusher
+* close-grip bench press
+
+### legs
+
+* back squat
+* front squat
+* hack squat
+* leg press
+* leg extension
+* romanian deadlift
+* stiff-leg deadlift
+* leg curl
+* hip thrust
+* calf raise
+
+map equipment + muscle groups + movement patterns.
+
+---
+
+# 79. USER CUSTOM EXERCISES
+
+allow users to add custom exercises without requiring developer/database changes.
+
+custom exercises should appear in:
+
+* picker
+* history
+* programs
+* analytics
+* PR engine
+
+---
+
+# 80. SEARCH
+
+global search can eventually support:
+
+* exercises
+* workouts
+* programs
+* notes
+
+but exercise search has priority.
+
+make search keyboard-friendly on desktop.
+
+use cmd/ctrl+k where appropriate.
+
+---
+
+# 81. PROFILE
+
+profile should show:
+
+* avatar
+* name
+* training experience
+* goals
+* stats
+* PR highlights
+* training history
+
+privacy controls must be clear.
+
+---
+
+# 82. SUBSCRIPTION ARCHITECTURE
+
+do not hardcode premium logic throughout the app.
+
+create an abstraction such as:
+
+```ts
+hasFeature("advanced_analytics")
+hasFeature("ai_coach")
+hasFeature("program_generator")
+hasFeature("social")
+```
+
+design feature gates cleanly.
+
+do not implement payments prematurely unless specifically required.
+
+build the architecture so billing can be added later.
+
+---
+
+# 83. DESIGN SYSTEM FILES
+
+create a reusable design system structure such as:
+
+```text
+components/ui/
+components/layout/
+components/workout/
+components/analytics/
+components/programs/
+```
+
+and document the design conventions in:
+
+```text
+DESIGN_SYSTEM.md
+```
+
+include:
+
+* typography hierarchy
+* spacing
+* button usage
+* card usage
+* form patterns
+* mobile behavior
+* desktop behavior
+* color/token strategy
+* interaction patterns
+
+---
+
+# 84. ARCHITECTURE DOCUMENT
+
+create:
+
+```text
+ARCHITECTURE.md
+```
+
+document:
+
+* app architecture
+* routing
+* database
+* auth
+* local persistence
+* synchronization
+* analytics
+* ai
+* security
+* server/client boundaries
+* major dependencies
+
+keep it updated as the architecture evolves.
+
+---
+
+# 85. ENVIRONMENT VARIABLES
+
+create:
+
+```text
+.env.example
+```
+
+include required variables without exposing secrets.
+
+never commit actual credentials.
+
+---
+
+# 86. CODE QUALITY
+
+use strict typescript.
+
+avoid:
+
+```ts
+any
+```
+
+unless genuinely unavoidable.
+
+prefer:
+
+* small functions
+* typed interfaces
+* discriminated unions
+* reusable utilities
+* predictable state transitions
+
+do not hide errors.
+
+---
+
+# 87. BUSINESS LOGIC SEPARATION
+
+never put complex calculations directly in JSX.
+
+bad:
+
+```tsx
+<div>
+  {sets.reduce((a, s) => a + s.weight * s.reps, 0)}
+</div>
+```
+
+prefer:
+
+```ts
+const volume = calculateWorkoutVolume(sets)
+```
+
+then render `volume`.
+
+this keeps analytics testable.
+
+---
+
+# 88. TESTING
+
+write automated tests for critical functionality.
+
+minimum:
+
+### unit tests
+
+* 1rm formulas
+* volume
+* PR detection
+* progression
+* plateau detection
+* muscle volume
+* bodyweight trend
+* plate calculator
+* sync conflict behavior
+
+### integration tests
+
+* signup
+* login
+* create workout
+* add exercise
+* log set
+* finish workout
+* retrieve history
+* create program
+* offline logging
+* synchronization
+
+### ui/e2e
+
+test the core workout flow.
+
+---
+
+# 89. TEST THE MOST IMPORTANT FLOW
+
+the most important e2e test is:
+
+```text
+login
+↓
+start workout
+↓
+add exercise
+↓
+log set
+↓
+complete set
+↓
+rest timer starts
+↓
+log second set
+↓
+finish workout
+↓
+workout appears in history
+↓
+PR / analytics update correctly
+```
+
+also test:
+
+```text
+disconnect network
+↓
+start workout
+↓
+log sets
+↓
+finish workout
+↓
+reconnect
+↓
+sync
+↓
+verify server data
+```
+
+---
+
+# 90. SECURITY TESTING
+
+verify that a user cannot access another user's:
+
+* workout
+* sets
+* body measurements
+* photos
+* notes
+* settings
+
+test supabase RLS directly.
+
+---
+
+# 91. DATA VALIDATION
+
+prevent invalid data.
+
+examples:
+
+```text
+weight < 0        invalid
+reps < 0          invalid
+rpe < 0            invalid
+rpe > 10           invalid
+rir < 0            invalid
+```
+
+adapt rules where the product intentionally allows edge cases.
+
+---
+
+# 92. HISTORICAL SNAPSHOTS
+
+when a workout is recorded, retain enough information to preserve its meaning.
+
+if an exercise changes later, old workouts must still display accurately.
+
+consider storing snapshots such as:
+
+```text
+exercise_name_snapshot
+```
+
+inside workout_exercises when appropriate.
+
+---
+
+# 93. OFFLINE OPTIMISTIC UX
+
+when a user logs a set:
+
+```text
+tap complete
+↓
+update local state immediately
+↓
+persist locally
+↓
+ui reflects success immediately
+↓
+sync in background
+```
+
+don't make the user wait for a network request before seeing the set complete.
+
+---
+
+# 94. SYNC STATUS
+
+optionally show subtle sync indicators:
+
+```text
+saved
+syncing
+offline
+synced
+sync failed
+```
+
+don't make the sync mechanism intrusive.
+
+---
+
+# 95. PROGRESSIVE ENHANCEMENT
+
+the core app must work without:
+
+* ai
+* social
+* nutrition
+* premium features
+
+the core value is still:
+
+```text
+workouts
++
+history
++
+progression
++
+analytics
+```
+
+---
+
+# 96. PRODUCT FEATURE PRIORITY
+
+build in this order:
+
+## P0 — absolutely required
+
+* auth
+* onboarding
+* dashboard
+* exercises
+* workout creation
+* active workout
+* set logging
+* rest timer
+* workout completion
+* history
+* local persistence
+* sync
+
+## P1 — core differentiators
+
+* PR system
+* estimated 1rm
+* progression engine
+* advanced history
+* exercise analytics
+* muscle volume
+* programs
+* bodyweight
+* measurements
+
+## P2 — advanced
+
+* plateau detection
+* readiness heuristics
+* program generator
+* exercise substitutions
+* progress photos
+* nutrition
+
+## P3 — optional expansion
+
+* ai coach
+* natural language queries
+* ai workout analysis
+* social
+* challenges
+* subscriptions
+
+do not implement P3 before P0 is reliable.
+
+---
+
+# 97. DEVELOPMENT WORKFLOW
+
+before writing significant code:
+
+1. inspect the repository
+2. inspect package.json
+3. inspect existing routes
+4. inspect existing components
+5. inspect existing database code
+6. identify existing dependencies
+7. identify what can be reused
+8. document architecture
+9. define schema
+10. begin implementation
+
+do not blindly overwrite an existing codebase.
+
+---
+
+# 98. IMPLEMENTATION PHASES
+
+## phase 1 — foundation
+
+build:
+
+* next.js app architecture
+* tailwind
+* shadcn/ui
+* theme
+* layout
+* responsive navigation
+* auth
+* supabase integration
+* database foundation
+* local persistence
+* base state architecture
+
+## phase 2 — workout engine
+
+build:
+
+* exercises
+* exercise picker
+* workout creation
+* active workout
+* set rows
+* rest timer
+* workout completion
+* history
+
+## phase 3 — analytics
+
+build:
+
+* PR engine
+* 1rm engine
+* volume
+* muscle volume
+* exercise history
+* progress charts
+* frequency
+
+## phase 4 — programs
+
+build:
+
+* program schema
+* program builder
+* program execution
+* progression
+
+## phase 5 — physique
+
+build:
+
+* bodyweight
+* measurements
+* progress photos
+
+## phase 6 — intelligent features
+
+build:
+
+* plateau detection
+* readiness heuristic
+* exercise substitutions
+* program generator
+
+## phase 7 — ai
+
+build:
+
+* workout summaries
+* natural-language queries
+* natural-language actions
+
+## phase 8 — social
+
+build:
+
+* profile
+* friends
+* sharing
+* feed
+* challenges
+
+## phase 9 — polish
+
+perform:
+
+* visual refinement
+* accessibility review
+* performance optimization
+* pwa validation
+* offline testing
+* synchronization testing
+* security testing
+* e2e testing
+* error-state review
+
+---
+
+# 99. CODING AGENT RULES
+
+you are allowed to make reasonable engineering decisions without asking for permission.
+
+do not stop for minor ambiguities.
+
+do not ask unnecessary clarification questions.
+
+when multiple approaches are possible, choose the one that:
+
+1. is simpler
+2. is maintainable
+3. works well with next.js
+4. minimizes unnecessary dependencies
+5. preserves future extensibility
+
+document important choices.
+
+---
+
+# 100. NEVER DO THESE THINGS
+
+do not:
+
+* generate fake api responses and call them complete
+* use hardcoded workout data in production screens
+* create static dashboard numbers
+* create fake ai outputs
+* put database queries everywhere
+* put all state into one giant store
+* make every component client-side
+* store all workout data in one JSON blob
+* skip RLS
+* make the app cloud-dependent for basic logging
+* use an llm for deterministic calculations
+* hide errors
+* leave placeholder buttons
+* use random arbitrary colors throughout the ui
+* create inconsistent spacing
+* create a different button style on every page
+* prioritize animations over responsiveness
+
+---
+
+# 101. ACCEPTANCE CRITERIA
+
+the application is not considered complete until the following works:
+
+## authentication
+
+```text
+signup
+login
+logout
+session persistence
+```
+
+## onboarding
+
+```text
+create profile
+save goals
+save training preferences
+```
+
+## workout
+
+```text
+create workout
+add exercise
+configure sets
+log weight
+log reps
+log rpe/r ir
+complete set
+start rest timer
+add/remove/reorder sets
+add/remove/reorder exercises
+finish workout
+```
+
+## history
+
+```text
+view completed workout
+view exercise history
+view previous performance
+```
+
+## progression
+
+```text
+calculate 1rm
+detect PR
+recommend load progression
+```
+
+## analytics
+
+```text
+calculate workout volume
+calculate muscle volume
+show trends
+show frequency
+```
+
+## programs
+
+```text
+create program
+add week
+add day
+add exercise
+configure progression
+start workout from program
+```
+
+## physique
+
+```text
+log bodyweight
+view bodyweight trend
+log measurements
+view measurement trend
+```
+
+## offline
+
+```text
+go offline
+log workout
+refresh page
+retain local state
+reconnect
+sync
+```
+
+---
+
+# 102. FINAL UX QUALITY BAR
+
+the app must feel like a serious commercial product.
+
+the target is not:
+
+```text
+student project
+```
+
+and not:
+
+```text
+generic dashboard
+```
+
+and not:
+
+```text
+ai-generated demo
+```
+
+the target is:
+
+```text
+premium fitness software
+```
+
+the strongest product differentiation should come from:
+
+```text
+fast logging
++
+beautiful workout ux
++
+deep analytics
++
+explainable progression
++
+programming
++
+physique tracking
++
+offline reliability
+```
+
+---
+
+# 103. FIRST TASK
+
+do not immediately start generating hundreds of files.
+
+first inspect the repository.
+
+then produce:
+
+```text
+1. current repository assessment
+
+2. proposed architecture
+
+3. exact folder structure
+
+4. database schema
+
+5. route map
+
+6. component architecture
+
+7. state architecture
+
+8. offline/sync strategy
+
+9. implementation phases
+
+10. immediate phase-1 tasks
+```
+
+write these decisions into:
+
+```text
+ARCHITECTURE.md
+```
+
+then begin implementing phase 1.
+
+after each major phase:
+
+* run type checking
+* run lint
+* run tests
+* fix issues
+* verify the actual behavior
+
+never assume that code is working simply because it compiles.
+
+the ultimate goal is not to maximize the number of features.
+
+the goal is to build the best possible **training workflow** and then layer intelligence on top of reliable data.

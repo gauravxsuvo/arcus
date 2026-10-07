@@ -1,0 +1,13 @@
+{
+  "name": "Forge Training",
+  "short_name": "Forge",
+  "description": "A focused training log built for better sessions and clearer progress.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#101310",
+  "theme_color": "#101310",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
