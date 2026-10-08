@@ -1,42 +1,89 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowUpRight, CalendarDays, ChevronRight, Dumbbell, History, Play, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Award, BarChart3, ChevronRight, Dumbbell, History, Play, Search, Upload } from "lucide-react";
 import { calculateWorkoutTotals, type WorkoutRecord } from "@/features/workouts/model";
 import { getActiveWorkout, getCompletedWorkouts } from "@/features/workouts/repository";
+import { WorkoutFeedCard } from "@/components/shared/workout-feed-card";
+import { AccountAccess } from "@/components/shared/account-access";
+import { TodayOverview } from "@/components/dashboard/today-overview";
+import { QuickStart } from "@/components/dashboard/quick-start";
+import { Avatar } from "@/components/shared/avatar";
+import { ArcusMark } from "@/components/shared/arcus-mark";
+import { useProfile } from "@/components/shared/user-profile-provider";
+import { weekStartDate, formatWeight, detectRecords, toDisplayWeight, weightUnit } from "@/features/training/logic";
+import styles from "./dashboard.module.css";
 
 export default function DashboardPage() {
+  const { preferences, user } = useProfile();
   const [active, setActive] = useState<WorkoutRecord | null>(null);
   const [history, setHistory] = useState<WorkoutRecord[]>([]);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const athlete = user?.name || user?.username || "Athlete";
+  const dataReady = ready && !error;
+
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([getActiveWorkout(), getCompletedWorkouts()]).then(([current, history]) => {
-      if (!cancelled) { setActive(current); setHistory(history); setReady(true); }
-    }).catch(() => { if (!cancelled) setReady(true); });
-    return () => { cancelled = true; };
-  }, []);
+    const load = async () => {
+      try {
+        const [current, sessions] = await Promise.all([getActiveWorkout(), getCompletedWorkouts()]);
+        if (!cancelled) { setActive(current); setHistory(sessions); setError(""); setReady(true); }
+      } catch {
+        if (!cancelled) { setError("Your training log couldn’t load. Try again to restore your workouts."); setReady(true); }
+      }
+    };
+    void load();
+    window.addEventListener("focus", load);
+    return () => { cancelled = true; window.removeEventListener("focus", load); };
+  }, [refreshKey]);
 
-  const weekStart = new Date();
-  weekStart.setHours(0, 0, 0, 0);
-  weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
-  const thisWeek = history.filter((workout) => Date.parse(workout.completedAt ?? "") >= weekStart.getTime());
+  const recordsByWorkout = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const record of detectRecords(history)) counts.set(record.workoutId, (counts.get(record.workoutId) ?? 0) + 1);
+    return counts;
+  }, [history]);
+  const now = new Date();
+  const weekStart = weekStartDate(now, preferences.weekStart);
+  const thisWeek = history.filter(workout => {
+    const timestamp = Date.parse(workout.completedAt ?? "");
+    return timestamp >= weekStart.getTime() && timestamp <= now.getTime();
+  });
   const weeklyVolume = thisWeek.reduce((sum, workout) => sum + calculateWorkoutTotals(workout).volume, 0);
-  const recent = history.slice(0, 3);
+  const displayVolume = toDisplayWeight(weeklyVolume, preferences.units);
+  const volumeLabel = new Intl.NumberFormat(undefined, { notation: displayVolume >= 10000 ? "compact" : "standard", maximumFractionDigits: displayVolume >= 10000 ? 1 : 0 }).format(displayVolume);
+  const weeklyRecords = thisWeek.reduce((sum, workout) => sum + (recordsByWorkout.get(workout.id) ?? 0), 0);
+  const activeTotals = active ? calculateWorkoutTotals(active) : null;
 
-  return <main className="dashboard-shell">
-    <header className="dashboard-top"><Link className="brand" href="/"><span className="brand-mark">F</span><span>FORGE<span className="brand-period">.</span></span></Link><nav className="main-nav" aria-label="Main navigation"><Link className="nav-active" href="/dashboard">Today</Link><Link href="/workout">Train</Link><Link href="/programs">Programs</Link><Link href="/history">History</Link><Link href="/exercises">Exercises</Link><Link href="/progress">Progress</Link><Link href="/profile">Profile</Link></nav><span className="offline-badge"><span /> DEVICE SAVED</span></header>
-    <section className="dashboard-welcome"><div><p className="eyebrow"><span className="live-dot" /> YOUR TRAINING SPACE</p><h1>Make today<br /><span>count.</span></h1><p className="dashboard-subtitle">A clear place to begin, and a record of what you’ve done.</p></div><div className="date-card"><CalendarDays size={18} /><div><span>TODAY</span><strong>{new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" }).format(new Date())}</strong></div></div></section>
-
-    {active && <Link href="/workout" className="resume-card"><div className="resume-icon"><Play size={18} fill="currentColor" /></div><div className="resume-copy"><span>WORKOUT IN PROGRESS</span><strong>{active.name || "Workout"}</strong><small>{active.exercises.length} exercises · started {new Date(active.startedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></div><span className="resume-action">Resume <ChevronRight size={16} /></span></Link>}
-
-    <section className="today-grid"><article className="today-card featured-today"><div className="today-card-top"><span className="card-label">TODAY’S TRAINING</span><span className="card-index">01</span></div><div className="today-art"><div className="art-ring ring-one"/><div className="art-ring ring-two"/><Dumbbell size={32}/></div><div className="today-card-bottom"><div><h2>{active ? "Keep your momentum." : "Ready when you are."}</h2><p>{active ? "Pick up right where you left off." : "Start with an empty session and build it as you go."}</p></div><Link className="circle-arrow" href="/workout" aria-label={active ? "Resume workout" : "Start workout"}>{active ? <Play size={17} fill="currentColor"/> : <ArrowUpRight size={20}/>}</Link></div></article>
-      <div className="quick-actions"><p className="card-label">QUICK START</p><Link className="quick-action" href="/workout"><span className="quick-icon"><Plus size={17}/></span><span><strong>Empty workout</strong><small>Choose exercises as you go</small></span><ChevronRight size={16}/></Link><Link className="quick-action" href="/programs"><span className="quick-icon"><CalendarDays size={17}/></span><span><strong>Follow a program</strong><small>Build and run a training week</small></span><ChevronRight size={16}/></Link><Link className="quick-action" href="/exercises"><span className="quick-icon"><Dumbbell size={17}/></span><span><strong>Browse exercises</strong><small>Find a movement to train</small></span><ChevronRight size={16}/></Link><Link className="quick-action" href="/progress"><span className="quick-icon"><Activity size={17}/></span><span><strong>Log physique & progress</strong><small>Review trends and measurements</small></span><ChevronRight size={16}/></Link></div>
+  return <main className={`social-shell home-shell ${styles.page}`}>
+    <header className={styles.header}>
+      <div><Link href="/welcome" className={styles.brand}><ArcusMark size={23}/><span>ARCUS TRAINING</span></Link><h1>Home</h1><p suppressHydrationWarning>{now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p></div>
+      <div className={styles.headerActions}><Link className={styles.search} href="/exercises" aria-label="Search exercises"><Search size={21}/></Link><Link className={styles.avatar} href="/profile" aria-label="Open your profile"><Avatar size={44}/></Link></div>
+    </header>
+    <AccountAccess className={styles.account} description="Keep your progress backed up."/>
+    {error && <div className={styles.error} role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Try again</button></div>}
+    <section className={styles.hero} aria-labelledby="home-training-title">
+      <div className={styles.heroTop}><span className={styles.trainingBadge}><span/>{active ? "WORKOUT IN PROGRESS" : "YOUR NEXT SESSION"}</span><span className={styles.heroIcon}><Dumbbell size={24}/></span></div>
+      <h2 id="home-training-title">{active ? active.name || "Your workout" : history.length ? "Keep your momentum." : "Make today count."}</h2>
+      <p>{active ? `${active.exercises.length} exercises · ${activeTotals?.sets ?? 0} sets logged. Pick up where you left off.` : history.length ? "A little progress, one session at a time. Your log is ready." : "Start simple. Choose your exercises and log your first sets."}</p>
+      <Link className={styles.primary} href="/workout">{active ? <Play size={18} fill="currentColor"/> : <Dumbbell size={19}/>}<span>{active ? "Resume workout" : "Start a workout"}</span><ArrowRight size={19}/></Link>
+      {!active && <Link className={styles.heroSecondary} href="/programs">Want a plan? Explore programs <ChevronRight size={14}/></Link>}
     </section>
-
-      <section className="dashboard-lower"><div className="recent-panel"><div className="panel-heading"><div><p className="eyebrow">THE WORK ADDS UP</p><h2>Recent sessions</h2></div><Link className="view-all" href="/history">View all <ArrowUpRight size={15}/></Link></div>{!ready ? <p className="subtle-copy">Loading your training log…</p> : recent.length === 0 ? <div className="recent-empty"><span className="empty-mark"><History size={19}/></span><p>Your finished sessions will show up here.</p></div> : recent.map((workout) => <Link className="recent-row" key={workout.id} href="/history"><span className="recent-icon"><Activity size={16}/></span><span className="recent-name"><strong>{workout.name || "Workout"}</strong><small>{new Date(workout.completedAt ?? workout.startedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {workout.exercises.length} exercises · {workout.syncStatus === "synced" ? "Synced" : "On device"}</small></span><span className="recent-volume">{calculateWorkoutTotals(workout).volume.toLocaleString()} <small>kg</small></span><ChevronRight size={16}/></Link>)}</div>
-      <aside className="week-panel"><div className="week-icon"><Sparkles size={18}/></div><p className="card-label">THIS WEEK</p><div className="week-stat"><strong>{thisWeek.length}</strong><span>SESSIONS<br/>COMPLETED</span></div><div className="week-divider"/><div className="week-stat volume-stat"><strong>{weeklyVolume.toLocaleString()}</strong><span>KG LOGGED<br/>THIS WEEK</span></div><p className="week-note">Built from your completed sessions on this device.</p></aside></section>
-    <footer className="dashboard-footer"><span>FORGE TRAINING SYSTEM</span><span>KEEP SHOWING UP.</span></footer>
+    <section className={styles.weekSummary} aria-label="This week’s training summary">
+      <div className={styles.sectionLabel}><h2>This week</h2><Link href="/progress">View progress <ArrowRight size={14}/></Link></div>
+      <div className={styles.metrics}>
+        <Link href="/history" className={styles.metric} aria-label={dataReady ? `${thisWeek.length} sessions this week` : "Weekly sessions unavailable"}><span className={styles.metricIcon}><Dumbbell size={17}/></span><strong>{dataReady ? thisWeek.length : "—"}</strong><span>Sessions</span></Link>
+        <Link href="/progress" className={styles.metric} aria-label={dataReady ? `Weekly volume: ${formatWeight(weeklyVolume, preferences.units)}` : "Weekly volume unavailable"}><span className={styles.metricIcon}><BarChart3 size={17}/></span><strong>{dataReady ? volumeLabel : "—"}<small>{weightUnit(preferences.units)}</small></strong><span>Volume</span></Link>
+        <Link href="/progress" className={styles.metric} aria-label={dataReady ? `${weeklyRecords} personal records this week` : "Weekly personal records unavailable"}><span className={`${styles.metricIcon} ${styles.gold}`}><Award size={17}/></span><strong>{dataReady ? weeklyRecords : "—"}</strong><span>Records</span></Link>
+      </div>
+    </section>
+    <div className={styles.middle}>{!error && <TodayOverview workouts={history} active={Boolean(active)} ready={dataReady}/>}<QuickStart active={active} lastCompleted={history[0] ?? null} ready={dataReady}/></div>
+    <section className={styles.recent} aria-labelledby="recent-training-title">
+      <div className={styles.sectionHeading}><div><span>YOUR TRAINING LOG</span><h2 id="recent-training-title">Recent sessions</h2></div><Link href="/history">View all <ArrowRight size={15}/></Link></div>
+      {!ready ? <div className={styles.loading} role="status"><span/><span/><span/><p>Loading your training log…</p></div> : error ? <p className={styles.emptyDescription}>Your saved sessions will appear here when your training log loads.</p> : history.length === 0 ? <div className={styles.empty}><span className={styles.emptyIcon}><History size={25}/></span><h3>A fresh start.</h3><p>Your completed workouts will appear here. Already have a training log?</p><Link href="/profile/data"><Upload size={16}/> Import from Hevy or CSV <ArrowRight size={15}/></Link></div> : <div className={styles.feed}>{history.slice(0, 3).map(workout => <WorkoutFeedCard key={workout.id} workout={workout} athlete={athlete} records={recordsByWorkout.get(workout.id) ?? 0}/>)}</div>}
+    </section>
+    <p className={styles.footerNote}>Built for the work. One session at a time.</p>
   </main>;
 }

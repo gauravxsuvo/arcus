@@ -1,6 +1,6 @@
 import type { WorkoutRecord } from "./model";
 
-const DATABASE = "forge-training";
+const DATABASE = "ARCUS-training";
 const VERSION = 1;
 const STORE = "workouts";
 
@@ -51,6 +51,20 @@ export async function saveWorkout(workout: WorkoutRecord): Promise<void> {
   await transact("readwrite", (store) => store.put({ ...workout, updatedAt: new Date().toISOString() }));
 }
 
+// Server acknowledgements and restores preserve the original revision.
+export async function cacheWorkout(workout:WorkoutRecord):Promise<void> {
+  await transact("readwrite",store=>store.put(workout));
+}
+
+export async function saveWorkouts(workouts: WorkoutRecord[]): Promise<void> {
+  if (workouts.length === 0) return;
+  await transact("readwrite", (store) => {
+    let lastRequest: IDBRequest<IDBValidKey> | null = null;
+    for (const workout of workouts) lastRequest = store.put({ ...workout, updatedAt: new Date().toISOString() });
+    return lastRequest as IDBRequest<IDBValidKey>;
+  });
+}
+
 export async function getActiveWorkout(): Promise<WorkoutRecord | null> {
   const rows = await transact<WorkoutRecord[]>("readonly", (store) => store.index("status").getAll("active"));
   return rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
@@ -69,6 +83,13 @@ export async function getCompletedWorkouts(): Promise<WorkoutRecord[]> {
 export async function getPendingWorkouts(): Promise<WorkoutRecord[]> {
   const rows = await transact<WorkoutRecord[]>("readonly", (store) => store.index("status").getAll("completed"));
   return rows.filter((workout) => workout.syncStatus !== "synced");
+}
+
+export async function deleteWorkoutsByImportBatch(batchId: string): Promise<number> {
+  const rows = await transact<WorkoutRecord[]>("readonly", (store) => store.getAll());
+  const matches = rows.filter((workout) => workout.importBatchId === batchId);
+  for (const workout of matches) await transact("readwrite", (store) => store.delete(workout.id));
+  return matches.length;
 }
 
 export async function deleteWorkout(id: string): Promise<void> {

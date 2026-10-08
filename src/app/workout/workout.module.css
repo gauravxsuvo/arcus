@@ -1,0 +1,218 @@
+.shell {
+  --workout-card: #15171d;
+  --workout-control: #20232c;
+  --workout-border: #2b303b;
+  --workout-muted: #a2a8b5;
+  --workout-text: #f5f7fb;
+  --workout-blue: #3b82f6;
+  --workout-soft-blue: #3b82f61a;
+  width: min(960px, 100%);
+  min-height: 100dvh;
+  padding-inline: 28px;
+  color: var(--workout-text);
+}
+
+.shell > * { animation: none; }
+.shell button, .shell summary, .shell a { -webkit-tap-highlight-color: transparent; }
+.shell button { cursor: pointer; }
+.shell button:disabled { cursor: default; opacity: .55; }
+.shell :is(button, a, input, select, textarea, summary):focus-visible { outline: 2px solid #70a7ff; outline-offset: 3px; }
+.shell input, .shell select, .shell textarea { min-width: 0; font-size: 16px; }
+.shell :global(.eyebrow) { color: var(--workout-muted); font-size: 10px; letter-spacing: .12em; }
+.shell :global(.live-dot) { background: var(--workout-blue); box-shadow: 0 0 10px #3b82f633; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 74px; border-bottom: 1px solid var(--workout-border); }
+.stickyTop { position: sticky; top: 0; z-index: 8; background: var(--canvas); }
+.back { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; color: var(--workout-muted); font-size: 14px; }
+.back:hover { color: var(--workout-text); }
+.saveStatus { display: inline-flex; align-items: center; justify-content: center; gap: 5px; color: var(--workout-muted); font-size: 12px; white-space: nowrap; }
+.saveStatus svg { color: #6da5fc; }
+.saveError { color: #f2b46d; }
+.saveError svg { color: inherit; }
+.finish, .primary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px; background: #2563eb; color: #fff; font-size: 15px; font-weight: 650; transition: background .15s, transform .15s; }
+.finish { min-height: 44px; padding-inline: 15px; }
+.finish:hover:not(:disabled), .primary:hover:not(:disabled) { background: #1d4ed8; }
+.finish:active:not(:disabled), .primary:active:not(:disabled) { transform: scale(.98); }
+.loading { display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 45vh; color: var(--workout-muted); font-size: 15px; }
+.loading svg { color: var(--workout-blue); }
+.pageTitle { padding: 35px 0 28px; }
+.pageTitle :global(.eyebrow) { margin-bottom: 12px; }
+.pageTitle h1 { font-size: clamp(38px, 5vw, 48px); letter-spacing: -.045em; line-height: 1.1; }
+.pageTitle > p:last-child { margin: 12px 0 0; color: var(--workout-muted); font-size: 15px; line-height: 1.5; }
+.startCard { padding: 30px; border: 1px solid #334058; border-radius: 22px; background: radial-gradient(ellipse at 100% 0%, #22344f 0, var(--workout-card) 62%); }
+.startIcon { display: grid; place-items: center; width: 60px; height: 60px; margin-bottom: 26px; border-radius: 17px; background: #3b82f62e; color: #7caeff; }
+.kicker { color: var(--workout-muted); font-size: 10px; letter-spacing: .12em; }
+.startCard h2 { margin: 9px 0 12px; font-size: 30px; letter-spacing: -.035em; line-height: 1.15; }
+.startCard > p:not(.kicker) { max-width: 430px; margin: 0 0 24px; color: var(--workout-muted); font-size: 15px; line-height: 1.65; }
+.startCard .primary { width: 100%; max-width: 360px; min-height: 54px; }
+.reassurance { display: flex; align-items: center; gap: 7px; margin-top: 17px; color: var(--workout-muted); font-size: 12px; line-height: 1.5; }
+.reassurance svg { flex: 0 0 auto; color: #7ba6f1; }
+.startAlternatives { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
+.startAlternatives a { display: flex; align-items: center; gap: 13px; min-width: 0; min-height: 100px; padding: 20px; border: 1px solid var(--workout-border); border-radius: 16px; background: var(--workout-card); }
+.startAlternatives a:hover { border-color: #5483cb; }
+.startAlternatives a > svg:first-child { flex: 0 0 auto; color: #70a7ff; }
+.startAlternatives a > svg:last-child { flex: 0 0 auto; width: 17px; margin-left: auto; color: var(--workout-muted); }
+.startAlternatives span { min-width: 0; }
+.startAlternatives strong { display: block; font-size: 15px; font-weight: 600; }
+.startAlternatives small { display: block; margin-top: 5px; color: var(--workout-muted); font-size: 12px; line-height: 1.5; }
+.catalogLink { display: flex; justify-content: center; align-items: center; gap: 9px; min-height: 52px; margin-top: 16px; color: #7caeff; font-size: 14px; }
+.editable { min-width: 0; margin: 0; padding: 0; border: 0; }
+.shell :global(.workout-heading) { gap: 14px; padding-block: 30px 22px; }
+.shell :global(.workout-heading) > div:first-child { flex: 1; min-width: 0; }
+.shell :global(.workout-heading .eyebrow) { margin-bottom: 9px; }
+.shell :global(.workout-name) { width: 100%; max-width: 600px; min-height: 44px; color: var(--workout-text); font-size: clamp(28px, 4vw, 38px); font-weight: 650; letter-spacing: -.04em; }
+.nameHint { display: block; margin-top: 6px; color: var(--workout-muted); font-size: 12px; }
+.shell :global(.elapsed-chip) { flex-shrink: 0; padding: 10px 12px; border-color: var(--workout-border); border-radius: 12px; background: var(--workout-card); color: #79adff; font: 14px Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.shell :global(.session-summary) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 18px; border-color: var(--workout-border); border-radius: 16px; background: var(--workout-card); }
+.shell :global(.session-summary) strong { color: var(--workout-text); font: 600 20px Arial, sans-serif; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.shell :global(.session-summary) small { color: var(--workout-muted); font-size: 13px; font-weight: 400; }
+.shell :global(.session-summary) span { color: var(--workout-muted); font: 12px/1.5 Arial, sans-serif; letter-spacing: 0; }
+.progressTrack { height: 4px; overflow: hidden; margin: 12px 3px 20px; border-radius: 8px; background: var(--workout-border); }
+.progressTrack > span { display: block; height: 100%; border-radius: inherit; background: var(--workout-blue); transition: width .2s ease; }
+.notice { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 16px 0; padding: 14px 52px 14px 15px; border: 1px solid #946b32; border-radius: 12px; background: #f5ad2012; color: var(--workout-text); font-size: 14px; line-height: 1.5; }
+.notice p { flex: 1 1 280px; margin: 0; }
+.retry { min-height: 44px; padding: 0 12px; border: 1px solid #946b32; border-radius: 8px; background: var(--workout-control); color: var(--workout-text); font-size: 13px; }
+.dismiss { position: absolute; top: 5px; right: 5px; display: grid; place-items: center; width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--workout-muted); }
+.shell :global(.exercise-jump-nav) { position: static; margin: 22px 0 0; border-color: var(--workout-border); border-radius: 13px; background: var(--workout-card); }
+.shell :global(.exercise-jump-nav) button { min-height: 44px; border-color: var(--workout-border); background: var(--workout-control); color: var(--workout-text); }
+.shell :global(.section-heading) { flex-wrap: wrap; gap: 12px; padding-block: 24px 16px; margin: 0; }
+.shell :global(.section-heading h2) { margin: 0; font-size: 23px; letter-spacing: -.03em; }
+.sectionHint { margin: 6px 0 0; color: var(--workout-muted); font-size: 12px; line-height: 1.5; }
+.addExercise { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; min-height: 46px; padding: 0 14px; border: 1px solid #36598b; border-radius: 11px; background: var(--workout-soft-blue); color: #80b0ff; font-size: 14px; font-weight: 600; }
+.shell :global(.empty-exercises) { display: flex; align-items: center; flex-direction: column; gap: 13px; padding: 42px 20px; margin-top: 5px; border: 1px dashed var(--workout-border); border-radius: 18px; background: var(--workout-card); text-align: center; }
+.shell :global(.empty-mark) { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: #80b0ff; background: var(--workout-soft-blue); }
+.shell :global(.empty-exercises h3) { margin: 0; font-size: 21px; }
+.shell :global(.empty-exercises p) { max-width: 290px; margin: 0 0 6px; color: var(--workout-muted); font-size: 14px; line-height: 1.6; }
+.shell :global(.exercise-stack) { gap: 18px; }
+.shell :global(.exercise-card) { padding: 0 18px 14px; border-color: var(--workout-border); border-radius: 17px; background: var(--workout-card); scroll-margin-top: 170px; }
+.shell :global(.exercise-card-head) { align-items: flex-start; flex-wrap: wrap; gap: 8px; padding-block: 18px 12px; }
+.shell :global(.exercise-title) { flex: 1 1 200px; gap: 10px; min-width: 0; }
+.shell :global(.exercise-title) > div { min-width: 0; }
+.shell :global(.exercise-order) { display: grid; place-items: center; flex: 0 0 32px; min-height: 32px; border-radius: 9px; background: var(--workout-soft-blue); color: #7aaaff; font: 600 12px Arial, sans-serif; }
+.shell :global(.exercise-title h3) { margin: 0 0 5px; font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.shell :global(.exercise-title p) { color: var(--workout-muted); font-size: 12px; line-height: 1.5; }
+.shell :global(.exercise-title p span) { color: inherit; }
+.shell :global(.exercise-actions) { margin-left: auto; }
+.shell :global(.icon-button) { width: 44px; min-width: 44px; height: 44px; min-height: 44px; border-radius: 10px; color: var(--workout-muted); }
+.shell :global(.icon-button:hover) { background: var(--workout-control); border-color: var(--workout-border); }
+.shell :global(.last-time) { height: auto; min-height: 36px; flex-wrap: wrap; gap: 5px 9px; margin-bottom: 10px; padding: 10px; border-radius: 9px; background: var(--workout-control); color: var(--workout-muted); font: 12px/1.5 Arial, sans-serif; letter-spacing: 0; }
+.shell :global(.last-time span:first-child) { flex: 0 0 auto; color: #7aaaff; font-size: 10px; font-weight: 700; }
+.shell :global(.last-time span:last-child) { min-width: 0; overflow-wrap: anywhere; }
+.shell :global(.set-table-head), .shell :global(.set-row) { grid-template-columns: 24px minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, .85fr) 92px; gap: 8px; padding-inline: 0; }
+.shell :global(.set-table-head) { min-height: 35px; color: var(--workout-muted); font: 10px Arial, sans-serif; letter-spacing: .05em; }
+.shell :global(.set-row) { min-height: 62px; padding-block: 8px; border-color: var(--workout-border); border-radius: 7px; }
+.shell :global(.set-index) { color: var(--workout-muted); font: 600 14px Arial, sans-serif; }
+.shell :global(.set-row-done) { background: #3b82f60d; }
+.shell :global(.set-row-warmup) { background: #e7ac2310; }
+.shell :global(.number-stepper) { min-width: 0; min-height: 46px; border-color: var(--workout-border); border-radius: 9px; background: var(--workout-control); }
+.shell :global(.number-stepper button) { flex-basis: 44px; min-height: 44px; color: var(--workout-muted); background: var(--workout-control); }
+.shell :global(.set-row input) { min-width: 0; min-height: 44px; padding-inline: 0; border: 0; color: var(--workout-text); background: transparent; font: 600 16px Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.shell :global(.effort-selector) { min-height: 46px; padding-inline: 2px; border-color: var(--workout-border); border-radius: 9px; color: var(--workout-text); background: var(--workout-control); font-size: 16px; }
+.shell :global(.set-row-actions) { gap: 4px; }
+.shell :global(.complete-set), .shell :global(.set-row-actions .complete-set) { width: 44px; min-height: 46px; border-color: var(--workout-border); border-radius: 10px; background: var(--workout-control); color: var(--workout-muted); }
+.shell :global(.set-row-actions .complete-set-active), .shell :global(.set-row-actions .complete-set-active:hover) { border-color: #2563eb; background: #2563eb; color: #fff; }
+.shell :global(.set-actions), .shell :global(.set-actions summary) { width: 44px; min-height: 44px; color: var(--workout-muted); font-size: 20px; }
+.shell :global(.set-action-menu) { border-color: var(--workout-border); border-radius: 11px; background: var(--workout-card); }
+.shell :global(.set-action-menu button) { min-height: 44px; font-size: 13px; color: var(--workout-text); }
+.shell :global(.effort-picks) { margin: 0; }
+.shell :global(.effort-picks summary) { min-height: 44px; padding: 12px 0 8px; color: var(--workout-muted); font-size: 12px; }
+.shell :global(.effort-picks button) { border-color: var(--workout-border); background: var(--workout-control); color: var(--workout-text); }
+.shell :global(.feature-exercise-settings) { padding-block: 12px; }
+.shell :global(.feature-exercise-settings label) { color: var(--workout-muted); font-size: 12px; }
+.shell :global(.feature-exercise-settings input) { max-width: 90px; min-height: 44px; border-color: var(--workout-border); background: var(--workout-control); color: var(--workout-text); font-size: 16px; }
+.shell :global(.set-footer-actions) { flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--workout-border); padding-top: 10px; }
+.shell :global(.add-set-button) { display: inline-flex; justify-content: center; flex: 1; min-height: 46px; margin: 0; padding: 0 12px; border: 1px solid var(--workout-border); border-radius: 10px; background: var(--workout-control); color: var(--workout-text); font-size: 14px; }
+.shell :global(.warmup-action) { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding-inline: 10px; color: var(--workout-muted); font-size: 12px; }
+.tools { margin-top: 22px; padding: 4px 16px; border: 1px solid var(--workout-border); border-radius: 14px; background: var(--workout-card); }
+.tools > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; cursor: pointer; list-style: none; font-size: 14px; font-weight: 600; }
+.tools > summary::-webkit-details-marker { display: none; }
+.tools summary small { display: block; margin-top: 5px; color: var(--workout-muted); font-size: 12px; font-weight: 400; }
+.tools[open] > summary > svg { transform: rotate(180deg); }
+.shell :global(.feature-panel) { padding: 16px; border-color: var(--workout-border); border-radius: 14px; background: var(--workout-card); }
+.shell :global(.feature-panel summary) { min-height: 44px; display: flex; align-items: center; font-size: 14px; }
+.shell :global(.notes-field) { margin-top: 14px; }
+.shell :global(.notes-field textarea) { min-height: 100px; border-color: var(--workout-border); background: var(--workout-control); color: var(--workout-text); font: 16px/1.5 Arial, sans-serif; }
+.shell :global(.tag-picker) { gap: 8px; }
+.shell :global(.tag-picker button) { min-height: 44px; padding: 0 12px; border-color: var(--workout-border); border-radius: 10px; background: var(--workout-card); color: var(--workout-muted); font-size: 12px; }
+.shell :global(.tag-picker button.selected) { border-color: #3b82f6; background: var(--workout-soft-blue); color: #79adff; }
+.workoutOptions { margin-top: 24px; border-top: 1px solid var(--workout-border); }
+.workoutOptions > summary { display: flex; justify-content: space-between; align-items: center; min-height: 52px; list-style: none; cursor: pointer; color: var(--workout-muted); font-size: 13px; }
+.workoutOptions > summary::-webkit-details-marker { display: none; }
+.workoutOptions p { margin: 0 0 12px; color: var(--workout-muted); font-size: 13px; line-height: 1.5; }
+.deleteWorkout { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 13px; border: 1px solid #74424c; border-radius: 10px; color: #f49aa5; background: #e7586710; font-size: 13px; }
+.sessionFootnote { display: flex; align-items: flex-start; gap: 7px; margin: 20px 0 0; color: var(--workout-muted); font-size: 12px; line-height: 1.6; }
+.sessionFootnote svg { flex-shrink: 0; margin-top: 2px; }
+.restTimer { position: sticky; top: 82px; z-index: 7; display: flex; align-items: center; gap: 12px; width: 100%; margin: 16px 0 0; padding: 12px 15px; border: 1px solid #3b5f94; border-radius: 14px; background: var(--workout-card); box-shadow: 0 6px 24px #0003; }
+.restTime { display: flex; align-items: center; gap: 10px; }
+.restTime > svg { flex-shrink: 0; color: #79adff; }
+.restTime span { display: block; color: var(--workout-muted); font-size: 11px; }
+.restTime strong { display: block; margin-top: 4px; color: var(--workout-text); font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.restEdit { display: flex; align-items: center; gap: 7px; margin-left: auto; color: var(--workout-muted); font-size: 11px; }
+.restEdit input { width: 63px; min-height: 44px; padding: 4px; border: 1px solid var(--workout-border); border-radius: 9px; color: var(--workout-text); background: var(--workout-control); font-size: 16px; text-align: center; }
+.restControls { display: flex; gap: 5px; }
+.restControls button { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 5px; border: 1px solid var(--workout-border); border-radius: 9px; color: var(--workout-text); background: var(--workout-control); font-size: 13px; }
+
+:global(html[data-theme="light"]) .shell { --workout-card: #fff; --workout-control: #f2f5fa; --workout-border: #dce2ec; --workout-muted: #657185; --workout-text: #172338; --workout-soft-blue: #3b82f60d; }
+:global(html[data-theme="light"]) .startCard { border-color: #d3dfef; background: radial-gradient(ellipse at 100% 0%, #e4efff 0, #fff 65%); }
+:global(html[data-theme="light"]) .startIcon, :global(html[data-theme="light"]) .addExercise { color: #2464c4; }
+:global(html[data-theme="light"]) .shell :global(.workout-name), :global(html[data-theme="light"]) .shell :global(.session-summary strong), :global(html[data-theme="light"]) .restTime strong { color: var(--workout-text); }
+:global(html[data-theme="light"]) .shell :global(.set-row input), :global(html[data-theme="light"]) .shell :global(.effort-selector) { color: var(--workout-text); }
+:global(html[data-theme="light"]) .shell :global(.set-row-actions .complete-set-active), :global(html[data-theme="light"]) .shell :global(.set-row-actions .complete-set-active:hover) { color: #fff; background: #2563eb; border-color: #2563eb; }
+
+@media (max-width: 760px) {
+  .shell { padding-inline: max(16px, env(safe-area-inset-left, 0px)); padding-bottom: calc(var(--mobile-nav-height) + 28px); }
+  .topbar { min-height: 70px; gap: 8px; }
+  .back { font-size: 13px; }
+  .saveStatus { font-size: 11px; }
+  .finish { padding-inline: 13px; font-size: 14px; }
+  .pageTitle { padding-block: 25px 22px; }
+  .pageTitle > p:last-child { max-width: 290px; font-size: 14px; }
+  .startCard { padding: 24px; border-radius: 19px; }
+  .startCard h2 { font-size: 28px; }
+  .startCard .primary { max-width: none; }
+  .reassurance { align-items: flex-start; font-size: 11px; }
+  .reassurance svg { margin-top: 1px; }
+  .startAlternatives { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 18px; }
+  .startAlternatives a { min-height: 84px; padding: 16px; }
+  .shell :global(.workout-heading) { padding-block: 25px 20px; }
+  .shell :global(.workout-name) { font-size: 28px; }
+  .shell :global(.elapsed-chip) { margin-top: 25px; padding: 9px; font-size: 13px; }
+  .shell :global(.session-summary) { gap: 8px; padding: 16px 12px; }
+  .shell :global(.session-summary) strong { font-size: 18px; }
+  .shell :global(.session-summary) span { font-size: 11px; }
+  .shell :global(.section-heading) { padding-block: 22px 14px; }
+  .shell :global(.section-heading h2) { font-size: 21px; }
+  .sectionHint { max-width: 220px; font-size: 12px; }
+  .addExercise { padding-inline: 11px; font-size: 13px; }
+  .shell :global(.exercise-card) { padding-inline: 12px; }
+  .shell :global(.exercise-actions) { flex-basis: 100%; justify-content: flex-end; margin-top: -3px; }
+  .shell :global(.exercise-title) { flex-basis: 100%; }
+  .shell :global(.exercise-title h3) { font-size: 17px; }
+  .shell :global(.set-table-head), .shell :global(.set-row) { grid-template-columns: 20px minmax(0, 1fr) minmax(0, .9fr) minmax(0, .8fr) 88px; gap: 5px; }
+  .shell :global(.set-row-actions) { gap: 0; }
+  .shell :global(.number-stepper > button) { display: none; }
+  .shell :global(.set-row input) { font-size: 16px; }
+  .restTimer { top: 78px; gap: 8px; padding: 10px; }
+  .restTime { gap: 7px; }
+  .restEdit { display: grid; gap: 3px; text-align: center; }
+  .restEdit input { width: 53px; }
+  .restControls { gap: 3px; }
+}
+
+@media (max-width: 359px) {
+  .shell { padding-inline: 12px; }
+  .saveStatus svg { display: none; }
+  .topbar { gap: 6px; }
+  .startCard { padding: 20px; }
+  .shell :global(.workout-heading) { gap: 9px; }
+  .shell :global(.workout-name) { font-size: 25px; }
+  .nameHint { font-size: 11px; }
+  .shell :global(.session-summary) strong { font-size: 16px; }
+  .shell :global(.session-summary) span { font-size: 10px; }
+  .shell :global(.exercise-card) { padding-inline: 10px; }
+  .shell :global(.set-table-head), .shell :global(.set-row) { grid-template-columns: 16px repeat(3, minmax(0, 1fr)) 88px; gap: 4px; }
+  .restTimer { gap: 5px; padding-inline: 7px; }
+  .restTime > svg { display: none; }
+  .restControls button { padding-inline: 1px; }
+  .restEdit input { width: 49px; }
+}

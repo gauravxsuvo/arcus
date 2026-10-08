@@ -1,0 +1,30 @@
+import { exerciseCatalog } from "../exercises/catalog.ts";
+import type { ProgramDay,ProgramExercise,TrainingProgram } from "./model.ts";
+type Lift=[string,number,number,number?];
+type Template={id:string;name:string;level:"beginner"|"intermediate"|"advanced";daysPerWeek:number;description:string;schedule:{name:string;lifts:Lift[]}[];sourceUrl?:string;alternate?:boolean};
+const A:Lift[]=[["back-squat",3,5],["overhead-press",3,5],["conventional-deadlift",1,5]];
+const B:Lift[]=[["back-squat",3,5],["barbell-bench-press",3,5],["power-clean",5,3]];
+export const programTemplates:Template[]=[
+ {id:"starting-strength",name:"Starting Strength",level:"beginner",daysPerWeek:3,description:"Editable A/B novice template with three weekly exposures. Alternate A/B across two weeks; use a load you can control.",schedule:[{name:"A",lifts:A},{name:"B",lifts:B}],alternate:true,sourceUrl:"https://startingstrength.com/article/programs"},
+ {id:"stronglifts",name:"StrongLifts 5×5",level:"beginner",daysPerWeek:3,description:"Alternating full-body days; squat, bench and row on A, squat, press and one deadlift set on B.",schedule:[{name:"A",lifts:[["back-squat",5,5],["barbell-bench-press",5,5],["barbell-row",5,5]]},{name:"B",lifts:[["back-squat",5,5],["overhead-press",5,5],["conventional-deadlift",1,5]]}],alternate:true,sourceUrl:"https://stronglifts.com/stronglifts-5x5/workout-program/"},
+ {id:"push-pull-legs",name:"PPL · Push / Pull / Legs",level:"intermediate",daysPerWeek:6,description:"Two weekly exposures per pattern, using an editable 6–12 rep range.",schedule:[{name:"Push",lifts:[["barbell-bench-press",3,6,10],["overhead-press",3,6,10],["lateral-raise",3,10,15],["triceps-pushdown",3,10,15]]},{name:"Pull",lifts:[["pull-up",3,6,10],["barbell-row",3,6,10],["barbell-curl",3,10,15]]},{name:"Legs",lifts:[["back-squat",3,6,10],["romanian-deadlift",3,8,12],["leg-press",3,10,15],["standing-calf-raise",3,12,15]]}]},
+ {id:"upper-lower",name:"Upper / Lower Split",level:"intermediate",daysPerWeek:4,description:"Two upper and two lower days each week, with room for recovery.",schedule:[{name:"Upper",lifts:[["barbell-bench-press",3,6,10],["barbell-row",3,6,10],["overhead-press",3,8,12],["lat-pulldown",3,8,12]]},{name:"Lower",lifts:[["back-squat",3,6,10],["romanian-deadlift",3,8,12],["leg-press",3,10,12],["standing-calf-raise",3,12,15]]}]},
+ {id:"531-bbb",name:"5/3/1 · Boring But Big",level:"advanced",daysPerWeek:4,description:"Four-week editable percentage template with 5/3/1 main sets and 5×10 supplemental work at 50% of your training max. Set your training maxes before starting.",schedule:[{name:"Press",lifts:[["overhead-press",3,5],["lat-pulldown",3,10]]},{name:"Deadlift",lifts:[["conventional-deadlift",3,5],["face-pull",3,10]]},{name:"Bench",lifts:[["barbell-bench-press",3,5],["barbell-row",3,10]]},{name:"Squat",lifts:[["back-squat",3,5],["hanging-knee-raise",3,10]]}],sourceUrl:"https://www.jimwendler.com/blogs/jimwendler-com/boring-but-big-3-month-challenge"},
+ {id:"gzcl",name:"GZCL Method",level:"intermediate",daysPerWeek:4,description:"Editable tier-based template: a heavy lift, moderate-rep secondary lift, then higher-rep assistance. Adjust progression and failed-set stages to your chosen GZCL variation.",schedule:[{name:"Squat focus",lifts:[["back-squat",5,3],["barbell-bench-press",3,10],["lat-pulldown",3,15]]},{name:"Press focus",lifts:[["overhead-press",5,3],["conventional-deadlift",3,10],["barbell-row",3,15]]},{name:"Bench focus",lifts:[["barbell-bench-press",5,3],["back-squat",3,10],["lat-pulldown",3,15]]},{name:"Deadlift focus",lifts:[["conventional-deadlift",5,3],["overhead-press",3,10],["one-arm-dumbbell-row",3,15]]}],sourceUrl:"https://swoleateveryheight.blogspot.com/2016/02/gzcl-applications-adaptations.html"},
+ {id:"full-body",name:"Full Body 3x",level:"beginner",daysPerWeek:3,description:"Three balanced full-body sessions using compound movements and simple double progression.",schedule:[{name:"Full body A",lifts:[["back-squat",3,6,10],["barbell-bench-press",3,6,10],["barbell-row",3,8,12]]},{name:"Full body B",lifts:[["romanian-deadlift",3,8,12],["overhead-press",3,6,10],["lat-pulldown",3,8,12]]},{name:"Full body C",lifts:[["goblet-squat",3,10,12],["dumbbell-bench",3,8,12],["seated-cable-row",3,8,12]]}]},
+];
+export function createTemplateProgram(id:string):TrainingProgram{
+ const template=programTemplates.find(t=>t.id===id);if(!template)throw new Error("Template not found.");
+ const days:ProgramDay[]=[];const weeks=template.id==="531-bbb"?4:template.alternate?2:1;
+ for(let week=0;week<weeks;week++)for(let index=0;index<template.daysPerWeek;index++){
+  const plan=template.schedule[(template.alternate?week*template.daysPerWeek+index:index)%template.schedule.length];
+  const exercises:ProgramExercise[]=plan.lifts.map(([slug,sets,min,max])=>{const e=exerciseCatalog.find(e=>e.id===slug);if(!e)throw new Error(`Missing template exercise: ${slug}`);return {id:crypto.randomUUID(),exerciseId:e.id,name:e.name,muscle:e.muscle,equipment:e.equipment,sets,repMin:min,repMax:max??min,restSeconds:e.restSeconds,progressionMethod:"double_progression",progressionValue:2.5,targetRpe:8};});
+  if(template.id==="531-bbb"){
+   const percentages=[[65,75,85],[70,80,90],[75,85,95],[40,50,60]][week],reps=[5,3,1,5][week];
+   const main=exercises[0];main.setTargets=percentages.map((percentage,i)=>({percentage,reps:week===2?[5,3,1][i]:reps}));main.progressionMethod="percentage";
+   exercises.splice(1,0,{...main,id:crypto.randomUUID(),sets:5,repMin:10,repMax:10,setTargets:Array.from({length:5},()=>({percentage:50,reps:10}))});
+  }
+  days.push({id:crypto.randomUUID(),name:plan.name,weekIndex:week,exercises});
+ }
+ const now=new Date().toISOString();return {id:crypto.randomUUID(),name:template.name,goal:"Strength",description:template.description,level:template.level,daysPerWeek:template.daysPerWeek,durationWeeks:12,days,isCustom:false,createdAt:now,updatedAt:now,syncStatus:"pending",deloadEveryNWeeks:template.level==="beginner"?0:4,deloadReductionPercent:40,blockWeeks:4,blockIncreasePercent:2,sourceUrl:template.sourceUrl};
+}

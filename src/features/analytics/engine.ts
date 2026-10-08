@@ -1,14 +1,18 @@
-import { calculateWorkoutTotals, type WorkoutExercise, type WorkoutRecord } from "../workouts/model.ts";
+import { calculateWorkoutTotals, isCardioExercise, type WorkoutExercise, type WorkoutRecord } from "../workouts/model.ts";
 
-export function estimateOneRepMax(weight: number, reps: number): number {
+export type OneRepMaxMethod = "epley" | "brzycki";
+
+export function estimateOneRepMax(weight: number, reps: number, method: OneRepMaxMethod = "epley"): number {
   if (!Number.isFinite(weight) || !Number.isFinite(reps) || weight <= 0 || reps < 1) return 0;
   if (reps === 1) return weight;
   if (reps > 12) return 0;
+  if (method === "brzycki") return weight * (36 / (37 - reps));
   return weight * (1 + reps / 30);
 }
 
 export function getCompletedSets(exercise: WorkoutExercise) {
-  return exercise.sets.filter((set) => set.completed && (set.weight ?? 0) > 0 && (set.reps ?? 0) > 0);
+  if (isCardioExercise(exercise)) return [];
+  return exercise.sets.filter((set) => set.completed && set.setType !== "warmup" && (set.weight ?? 0) > 0 && (set.reps ?? 0) > 0);
 }
 
 export function calculateEstimatedBest(workouts: WorkoutRecord[], exerciseId: string) {
@@ -18,10 +22,11 @@ export function calculateEstimatedBest(workouts: WorkoutRecord[], exerciseId: st
     .reduce((best, estimate) => Math.max(best, estimate), 0);
 }
 
-export function buildWeeklyVolume(workouts: WorkoutRecord[], count = 12, now = new Date()) {
+export function buildWeeklyVolume(workouts: WorkoutRecord[], count = 12, now = new Date(), weekStart:"monday"|"sunday"="monday") {
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const offset=weekStart==="monday"?6:0;
+  start.setDate(start.getDate() - ((start.getDay() + offset) % 7));
   start.setDate(start.getDate() - (count - 1) * 7);
   const weeks = Array.from({ length: count }, (_, index) => {
     const date = new Date(start);
@@ -34,7 +39,7 @@ export function buildWeeklyVolume(workouts: WorkoutRecord[], count = 12, now = n
     const date = new Date(completedAt);
     const monday = new Date(date);
     monday.setHours(0, 0, 0, 0);
-    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    monday.setDate(monday.getDate() - ((monday.getDay() + offset) % 7));
     const week = weeks.find((item) => item.start.getTime() === monday.getTime());
     if (week) {
       const totals = calculateWorkoutTotals(workout);
@@ -56,7 +61,7 @@ export function calculateMuscleVolume(workouts: WorkoutRecord[]) {
   return [...totals.entries()].map(([muscle, volume]) => ({ muscle, volume })).sort((a, b) => b.volume - a.volume);
 }
 
-export function findPersonalRecords(workouts: WorkoutRecord[]) {
+export function findPersonalRecords(workouts: WorkoutRecord[], method: OneRepMaxMethod = "epley") {
   const sorted = [...workouts].sort((a, b) => (a.completedAt ?? "").localeCompare(b.completedAt ?? ""));
   const best = new Map<string, { weight: number; reps: number; oneRepMax: number; workoutId: string; workoutDate: string }>();
   const records: { exerciseId: string; exerciseName: string; weight: number; reps: number; estimatedOneRepMax: number; workoutId: string; workoutDate: string }[] = [];
@@ -66,7 +71,7 @@ export function findPersonalRecords(workouts: WorkoutRecord[]) {
       for (const set of getCompletedSets(exercise)) {
         const weight = set.weight ?? 0;
         const reps = set.reps ?? 0;
-        const estimate = estimateOneRepMax(weight, reps);
+        const estimate = estimateOneRepMax(weight, reps, method);
         if (estimate > prior.oneRepMax) {
           records.push({ exerciseId: exercise.exerciseId, exerciseName: exercise.name, weight, reps, estimatedOneRepMax: estimate, workoutId: workout.id, workoutDate: workout.completedAt ?? workout.startedAt });
           prior.oneRepMax = estimate;

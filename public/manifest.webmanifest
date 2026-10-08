@@ -1,13 +1,17 @@
 {
-  "name": "Forge Training",
-  "short_name": "Forge",
+  "id": "/",
+  "name": "Arcus Training",
+  "short_name": "Arcus",
   "description": "A focused training log built for better sessions and clearer progress.",
   "start_url": "/dashboard",
   "scope": "/",
+  "display_override": ["window-controls-overlay", "standalone"],
   "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["health", "fitness"],
   "background_color": "#101310",
   "theme_color": "#101310",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/arcus-moon-logo.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }
   ]
 }

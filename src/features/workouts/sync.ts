@@ -1,13 +1,35 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { calculateWorkoutTotals, type WorkoutRecord } from "./model";
-import { saveWorkout } from "./repository";
+import { cacheWorkout,getWorkoutById } from "./repository";
 import type { TrainingProgram } from "@/features/programs/model";
 import type { PhysiqueEntry } from "@/features/physique/model";
 import type { Exercise } from "@/features/exercises/catalog";
 import { hardDeleteCustomExercise, hardDeleteProgram, hardDeletePhysiqueEntry, saveCustomExercise, saveProgram, savePhysiqueEntry } from "@/features/local-data/repository";
 
+async function syncLibraryItem(kind:"program"|"measurement"|"exercise",payload:TrainingProgram|PhysiqueEntry|Exercise) {
+  const response=await fetch("/api/sync/library",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({entries:[{kind,id:payload.id,payload,updatedAt:payload.updatedAt??new Date().toISOString()}]})});
+  if(response.status===401)return false;
+  if(!response.ok)throw new Error("Library sync is temporarily unavailable.");
+  return true;
+}
+
 export async function syncCompletedWorkout(workout: WorkoutRecord): Promise<void> {
   if (workout.status !== "completed") return;
+  workout=await getWorkoutById(workout.id)??workout;
+  const portwaysResponse = await fetch("/api/sync/workout", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify(workout) });
+  if (portwaysResponse.ok) {
+    const result=await portwaysResponse.json() as {accepted?:boolean};
+    const current=await getWorkoutById(workout.id);
+    if(result.accepted!==false&&current?.updatedAt===workout.updatedAt)await cacheWorkout({ ...current, syncStatus: "synced" });
+    return;
+  }
+  if (portwaysResponse.status !== 401) {
+    const payload = await portwaysResponse.json().catch(() => ({})) as { error?: string };
+    throw new Error(payload.error ?? "Live workout database is unavailable.");
+  }
+  if (workout.location || workout.media?.length || workout.exercises.some(exercise => exercise.notes || exercise.trackingType === "cardio" || exercise.sets.some(set => set.distanceKm != null || set.durationSeconds != null))) {
+    throw new Error("Sign in to your ARCUS account to sync the edited workout and its attachments.");
+  }
   const supabase = createSupabaseBrowserClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError) throw userError;
@@ -64,10 +86,22 @@ export async function syncCompletedWorkout(workout: WorkoutRecord): Promise<void
     }
   }
 
-  await saveWorkout({ ...workout, syncStatus: "synced" });
+  const current = await getWorkoutById(workout.id);
+  if (current?.updatedAt === workout.updatedAt) await cacheWorkout({ ...current, syncStatus: "synced" });
+}
+
+export async function restoreWorkouts() {
+  let offset:number|null=0;
+  while(offset!==null){
+    const response=await fetch(`/api/sync/workout?offset=${offset}`,{credentials:"include"});if(!response.ok)return;
+    const data=await response.json() as {workouts:WorkoutRecord[];nextOffset:number|null};
+    for(const workout of data.workouts){const current=await getWorkoutById(workout.id);if(!current||current.syncStatus==="synced")await cacheWorkout({...workout,syncStatus:"synced"});}
+    offset=data.nextOffset;if(offset!==null)await new Promise(resolve=>setTimeout(resolve,1100));
+  }
 }
 
 export async function syncProgram(program: TrainingProgram): Promise<void> {
+  if(await syncLibraryItem("program",program)){await saveProgram({...program,syncStatus:"synced"});return;}
   const supabase = createSupabaseBrowserClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError) throw userError;
@@ -114,6 +148,7 @@ export async function syncProgram(program: TrainingProgram): Promise<void> {
 }
 
 export async function syncPhysiqueEntry(entry: PhysiqueEntry): Promise<void> {
+  if(await syncLibraryItem("measurement",entry)){await savePhysiqueEntry({...entry,syncStatus:"synced"});return;}
   const supabase = createSupabaseBrowserClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError) throw userError;
@@ -134,6 +169,7 @@ export async function syncPhysiqueEntry(entry: PhysiqueEntry): Promise<void> {
 }
 
 export async function syncCustomExercise(exercise: Exercise): Promise<void> {
+  if(await syncLibraryItem("exercise",exercise)){await saveCustomExercise({...exercise,syncStatus:"synced"});return;}
   const supabase = createSupabaseBrowserClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError) throw userError;

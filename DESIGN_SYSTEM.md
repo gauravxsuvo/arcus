@@ -14,7 +14,11 @@ Use semantic CSS tokens for background, surface, foreground, muted text, border,
 
 ## Interaction patterns
 
+Home has one primary Start/Resume action, a compact weekly summary and activity strip, a four-item training tools grid and recent sessions. Empty target and record panels stay hidden; populated secondary detail is expandable. Mobile navigation exposes Home, Workout, History and Profile directly. The active workout keeps Finish in the top bar, places advanced tools after the exercise log, and reports local save failures with a retry action. Page-level CSS modules reuse the existing semantic theme tokens.
+
 Use shared button, input, dialog, sheet, badge, tabs, toast, and skeleton primitives. Prefer inline editing and one-handed controls during workouts. Confirm only destructive actions. Provide keyboard operation on desktop and visible focus states everywhere.
+
+Exercise browsing prioritizes readable movement names, accessible muscle/equipment filters and All/Favorites/Recent collections. Secondary filters can collapse, and empty searches provide a reset action. History opens full sessions directly on mobile, keeps filters near the results, and distinguishes a failed storage read from an empty log.
 
 ## Responsive behavior
 

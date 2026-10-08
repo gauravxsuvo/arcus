@@ -1,0 +1,19 @@
+Date,Workout Name,Duration,Exercise Name,Set Order,Weight (kg),Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2026-09-22T17:30:00Z,Upper Body A,3600,Barbell Bench Press,1,60,10,,,,Easy warm-up,Upper body strength sample,6
+2026-09-22T17:30:00Z,Upper Body A,3600,Barbell Bench Press,2,65,8,,,,,Upper body strength sample,7
+2026-09-22T17:30:00Z,Upper Body A,3600,Barbell Bench Press,3,65,8,,,,,Upper body strength sample,8
+2026-09-22T17:30:00Z,Upper Body A,3600,Barbell Row,1,45,10,,,,,Upper body strength sample,7
+2026-09-22T17:30:00Z,Upper Body A,3600,Barbell Row,2,50,8,,,,,Upper body strength sample,8
+2026-09-22T17:30:00Z,Upper Body A,3600,Barbell Row,3,50,8,,,,,Upper body strength sample,8
+2026-09-25T17:45:00Z,Lower Body A,3900,Back Squat,1,70,8,,,,,Lower body strength sample,7
+2026-09-25T17:45:00Z,Lower Body A,3900,Back Squat,2,75,8,,,,,Lower body strength sample,8
+2026-09-25T17:45:00Z,Lower Body A,3900,Back Squat,3,75,6,,,,,Lower body strength sample,9
+2026-09-25T17:45:00Z,Lower Body A,3900,Romanian Deadlift,1,60,10,,,,,Lower body strength sample,7
+2026-09-25T17:45:00Z,Lower Body A,3900,Romanian Deadlift,2,65,8,,,,,Lower body strength sample,8
+2026-09-25T17:45:00Z,Lower Body A,3900,Romanian Deadlift,3,65,8,,,,,Lower body strength sample,8
+2026-09-29T17:30:00Z,Upper Body B,3600,Overhead Press,1,30,10,,,,,Second upper body session,7
+2026-09-29T17:30:00Z,Upper Body B,3600,Overhead Press,2,35,8,,,,,Second upper body session,8
+2026-09-29T17:30:00Z,Upper Body B,3600,Overhead Press,3,35,7,,,,,Second upper body session,9
+2026-09-29T17:30:00Z,Upper Body B,3600,Lat Pulldown,1,45,10,,,,,Second upper body session,7
+2026-09-29T17:30:00Z,Upper Body B,3600,Lat Pulldown,2,50,8,,,,,Second upper body session,8
+2026-09-29T17:30:00Z,Upper Body B,3600,Lat Pulldown,3,50,8,,,,,Second upper body session,8

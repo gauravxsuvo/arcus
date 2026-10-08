@@ -1,52 +1,29 @@
 "use client";
-
 import { useEffect } from "react";
-import { getPendingWorkouts, saveWorkout } from "@/features/workouts/repository";
-import { getPendingCustomExercises, getPendingPhysiqueEntries, getPendingPrograms, saveCustomExercise, savePhysiqueEntry, saveProgram } from "@/features/local-data/repository";
-import { syncCompletedWorkout, syncCustomExercise, syncPhysiqueEntry, syncProgram } from "@/features/workouts/sync";
-
+import { getPendingWorkouts } from "@/features/workouts/repository";
+import { syncCompletedWorkout } from "@/features/workouts/sync";
+import { flushLibrary } from "@/features/local-data/sync";
+import { flushProfile } from "@/features/profile/sync";
+import { getLocalSession } from "@/features/local-data/repository";
 export function SyncManager() {
-  useEffect(() => {
-    let busy = false;
-    const synchronize = async () => {
-      if (busy || !navigator.onLine) return;
-      busy = true;
-      try {
-        const customExercises = await getPendingCustomExercises();
-        for (const exercise of customExercises) {
-          try { await syncCustomExercise(exercise); }
-          catch (error) { await saveCustomExercise({ ...exercise, syncStatus: "error" }); if (process.env.NODE_ENV === "development") console.info("Custom exercise sync will retry later", error); }
+  useEffect(()=>{
+    let busy=false,lastRun=0,stopped=false;
+    const synchronize=async()=>{
+      if(stopped||busy||!navigator.onLine||Date.now()-lastRun<30000)return;
+      busy=true;lastRun=Date.now();
+      try{
+        if(!await getLocalSession())return;
+        await flushProfile();await new Promise(resolve=>setTimeout(resolve,1000));await flushLibrary();
+        for(const workout of (await getPendingWorkouts()).slice(0,10)){
+          if(stopped)break;await new Promise(resolve=>setTimeout(resolve,1100));
+          try{await syncCompletedWorkout(workout);}catch{break;}
         }
-        const programs = await getPendingPrograms();
-        for (const program of programs) {
-          try { await syncProgram(program); }
-          catch (error) { await saveProgram({ ...program, syncStatus: "error" }); if (process.env.NODE_ENV === "development") console.info("Program sync will retry later", error); }
-        }
-        const physiqueEntries = await getPendingPhysiqueEntries();
-        for (const entry of physiqueEntries) {
-          try { await syncPhysiqueEntry(entry); }
-          catch (error) { await savePhysiqueEntry({ ...entry, syncStatus: "error" }); if (process.env.NODE_ENV === "development") console.info("Physique sync will retry later", error); }
-        }
-        const pending = await getPendingWorkouts();
-        for (const workout of pending) {
-          try {
-            await syncCompletedWorkout(workout);
-          } catch (error) {
-            await saveWorkout({ ...workout, syncStatus: "error" });
-            if (process.env.NODE_ENV === "development") console.info("Workout sync will retry later", error);
-          }
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV === "development") console.info("Workout outbox is unavailable", error);
-      } finally { busy = false; }
+      }catch{ /* The persisted outbox retries on reconnect, focus, or the next interval. */ }
+      finally{busy=false;}
     };
-    void synchronize();
-    window.addEventListener("online", synchronize);
-    window.addEventListener("focus", synchronize);
-    return () => {
-      window.removeEventListener("online", synchronize);
-      window.removeEventListener("focus", synchronize);
-    };
-  }, []);
+    void synchronize();const timer=window.setInterval(()=>void synchronize(),60000);
+    window.addEventListener("online",synchronize);window.addEventListener("focus",synchronize);
+    return()=>{stopped=true;window.clearInterval(timer);window.removeEventListener("online",synchronize);window.removeEventListener("focus",synchronize);};
+  },[]);
   return null;
 }
