@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only";
 import pg from "pg";
 import { WebSocket } from "ws";
