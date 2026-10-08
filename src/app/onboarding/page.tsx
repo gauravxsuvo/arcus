@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getLocalSession, updateLocalUser } from "@/features/local-data/repository";
 
 const goalOptions = ["Muscle gain", "Strength", "Fat loss", "General fitness", "Bodybuilding", "Powerlifting", "Athletic performance"];
 const equipmentOptions = ["Barbell", "Dumbbell", "Cable", "Machines", "Bodyweight"];
@@ -19,13 +19,10 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     let cancelled = false;
-    try {
-      void createSupabaseBrowserClient().auth.getUser().then(({ data }) => {
-        if (cancelled) return;
-        if (!data.user) router.replace("/login");
-        else setAuthorized(true);
-      }).catch(() => { if (!cancelled) setError("Could not verify your session. Check your connection and try again."); });
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Supabase is not configured."); }
+    void getLocalSession().then((user) => {
+      if (cancelled) return;
+      if (!user) router.replace("/login"); else setAuthorized(true);
+    }).catch((reason) => { if (!cancelled) setError(reason instanceof Error ? reason.message : "Could not load your local account."); });
     return () => { cancelled = true; };
   }, [router]);
 
@@ -42,25 +39,13 @@ export default function OnboardingPage() {
       setError("Choose 1–7 training days and a 15–240 minute session length."); setBusy(false); return;
     }
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw userError ?? new Error("Sign in to save your profile.");
-      const { error: updateError } = await supabase.from("profiles").update({
-        display_name: String(form.get("name") ?? "").trim() || null,
-        experience: String(form.get("experience") ?? "beginner"),
-        sex: String(form.get("sex") ?? "") || null,
-        height_cm: form.get("height") ? Number(form.get("height")) : null,
-        goals,
-        preferences: {
-          age: form.get("age") ? Number(form.get("age")) : null,
-          training_days: days,
-          session_minutes: duration,
-          equipment,
-          preferred_exercises: String(form.get("preferred") ?? "").split(",").map((value) => value.trim()).filter(Boolean),
-          disliked_exercises: String(form.get("disliked") ?? "").split(",").map((value) => value.trim()).filter(Boolean),
-        },
-      }).eq("id", user.id);
-      if (updateError) throw updateError;
+      const user = await getLocalSession();
+      if (!user) throw new Error("Sign in to save your profile.");
+      const name = String(form.get("name") ?? "").trim() || user.name;
+      const profile = { experience: String(form.get("experience") ?? "beginner"), goals, height_cm: form.get("height") ? Number(form.get("height")) : null };
+      await updateLocalUser({ ...user, name, profile });
+      const remoteResponse = await fetch("/api/auth/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ name, ...profile }) });
+      if (!remoteResponse.ok && remoteResponse.status !== 401) throw new Error("Your local profile was saved, but the live profile service is unavailable.");
       router.push("/dashboard"); router.refresh();
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not save your training profile."); }
     finally { setBusy(false); }

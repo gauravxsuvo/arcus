@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="28" fill="#101310"/>
-  <path d="M29 22h72v18H49v16h45v17H49v16h52v18H29z" fill="#c4ed76"/>
-  <circle cx="103" cy="104" r="7" fill="#c4ed76"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>ARCUS mark</title>
+  <rect width="128" height="128" rx="28" fill="#09090b"/>
+  <path fill="#f5f5f7" d="M22 101 52 27h24l30 74H87l-6-16H47l-6 16H22Zm32-31h22l-11-29-11 29Z"/>
+  <path fill="#3b82f6" d="M37 111h54a7 7 0 0 0 0-14H43a7 7 0 0 0-6 14Z"/>
 </svg>

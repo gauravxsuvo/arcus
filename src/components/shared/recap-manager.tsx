@@ -1,0 +1,5 @@
+"use client";
+import { useEffect } from "react";
+import { useProfile } from "./user-profile-provider";
+import { generateRecaps } from "@/features/analytics/recaps";
+export function RecapManager(){const {preferences,ready}=useProfile();useEffect(()=>{if(!ready)return;const generate=async()=>{const created=await generateRecaps(preferences);if(created.length&&localStorage.getItem("arcus-recap-alerts")==="enabled"&&"Notification" in window&&Notification.permission==="granted"&&"serviceWorker" in navigator){const registration=await navigator.serviceWorker.ready;const latest=created[0];await registration.showNotification("Your ARCUS weekly recap is ready",{body:`${latest.sessions} sessions · ${latest.records} records. Open your recap.`,icon:"/icon.svg",tag:latest.id,data:{url:"/recaps"}});}};void generate().catch(()=>undefined);const onFocus=()=>void generate().catch(()=>undefined);window.addEventListener("focus",onFocus);return()=>window.removeEventListener("focus",onFocus);},[preferences,ready]);return null;}

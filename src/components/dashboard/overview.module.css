@@ -1,0 +1,73 @@
+.overview { display: grid; gap: 14px; min-width: 0; }
+.week, .program, .details { min-width: 0; border: 1px solid var(--feature-border); border-radius: 20px; background: var(--feature-card); color: var(--feature-text); }
+.week { padding: 20px; }
+.sectionHeading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sectionHeading h2, .tools h2 { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -.025em; }
+.sectionHeading p { margin: 5px 0 0; color: var(--feature-muted); font-size: 13px; line-height: 1.5; }
+.textLink { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 6px; min-height: 44px; color: #70a7ff; font-size: 13px; font-weight: 600; }
+.weekDays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; margin: 18px 0; padding: 0; list-style: none; }
+.weekDay { display: grid; justify-items: center; gap: 9px; min-width: 0; color: var(--feature-muted); font-size: 11px; }
+.dayMark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid transparent; border-radius: 50%; background: var(--control); color: var(--feature-muted); font-size: 12px; font-weight: 600; }
+.today .dayMark { border-color: #70a7ff; color: #70a7ff; }
+.trainedDay .dayMark { border-color: #3b82f6; background: #3b82f6; color: white; }
+.today > span:first-child { color: var(--feature-text); font-weight: 700; }
+.loadingMark { color: transparent; opacity: .55; }
+.weekFooter { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 15px; border-top: 1px solid var(--feature-border); }
+.streak { display: inline-flex; align-items: center; gap: 5px; color: var(--feature-muted); font-size: 12px; white-space: nowrap; }
+.streak svg { color: #f5b14d; margin-right: 2px; }
+.streak strong { color: var(--feature-text); font-size: 15px; }
+.weekProgress { display: grid; gap: 6px; justify-items: end; width: min(125px, 42%); }
+.weekProgress progress, .goal progress { appearance: none; width: 100%; height: 5px; overflow: hidden; border: 0; border-radius: 8px; background: var(--control); }
+.weekProgress progress::-webkit-progress-bar, .goal progress::-webkit-progress-bar { border-radius: 8px; background: var(--control); }
+.weekProgress progress::-webkit-progress-value, .goal progress::-webkit-progress-value { border-radius: 8px; background: #3b82f6; }
+.weekProgress progress::-moz-progress-bar, .goal progress::-moz-progress-bar { border-radius: 8px; background: #3b82f6; }
+.weekProgress span { color: var(--feature-muted); font-size: 11px; }
+.program { padding: 20px; }
+.programLabel { display: inline-flex; align-items: center; gap: 7px; color: var(--feature-muted); font-size: 12px; }
+.programLabel svg { color: #70a7ff; }
+.weekBadge { padding: 5px 8px; border-radius: 7px; background: var(--control); color: var(--feature-muted); font-size: 11px; white-space: nowrap; }
+.program h2 { margin: 16px 0 8px; font-size: 20px; line-height: 1.3; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.programDay { display: grid; gap: 5px; margin: 0; color: var(--feature-text); font-size: 14px; font-weight: 600; }
+.programDay span, .programMessage { color: var(--feature-muted); font-size: 13px; font-weight: 400; line-height: 1.6; }
+.programMessage { margin: 10px 0; }
+.programAction { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; margin: 16px 0 4px; padding: 12px 15px; border-radius: 12px; background: #2563eb; color: white; font-size: 14px; font-weight: 650; }
+.details { overflow: hidden; }
+.details summary { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 15px 18px; cursor: pointer; list-style: none; font-size: 14px; font-weight: 600; }
+.details summary::-webkit-details-marker { display: none; }
+.details summary > svg:first-child { flex: 0 0 auto; color: #70a7ff; }
+.details summary span { flex: 1; min-width: 0; }
+.details summary small { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--control); color: var(--feature-muted); font-size: 11px; }
+.chevron { color: var(--feature-muted); transition: transform .18s ease; }
+.details[open] .chevron { transform: rotate(180deg); }
+.detailsContent { padding: 0 18px 8px; border-top: 1px solid var(--feature-border); }
+.goal { display: grid; gap: 7px; padding: 15px 0; border-bottom: 1px solid var(--feature-border); }
+.goal strong { font-size: 14px; overflow-wrap: anywhere; }
+.goal span, .goal small { color: var(--feature-muted); font-size: 12px; line-height: 1.5; }
+.goal progress { margin: 3px 0; }
+.goal small { font-size: 11px; }
+.record { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 0; border-bottom: 1px solid var(--feature-border); }
+.record > div { min-width: 0; }
+.record strong { font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.record > strong { flex-shrink: 0; color: #70a7ff; }
+.record small { display: block; margin-top: 4px; color: var(--feature-muted); font-size: 11px; line-height: 1.5; }
+.tools { min-width: 0; }
+.tools h2 { margin-bottom: 14px; }
+.shortcutGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.shortcut { display: flex; align-items: center; gap: 11px; min-width: 0; min-height: 80px; padding: 15px; border: 1px solid var(--feature-border); border-radius: 15px; background: var(--feature-card); color: var(--feature-text); transition: border-color .18s ease, background .18s ease; }
+.shortcut > svg:first-child { flex-shrink: 0; color: #70a7ff; }
+.shortcut > span { display: grid; gap: 5px; min-width: 0; flex: 1; }
+.shortcut strong { font-size: 14px; font-weight: 600; }
+.shortcut small { color: var(--feature-muted); font-size: 11px; line-height: 1.4; }
+.shortcutArrow { flex-shrink: 0; color: var(--feature-muted); }
+.repeatLink { display: flex; align-items: center; gap: 10px; min-height: 56px; margin-top: 9px; padding: 10px 3px; color: #70a7ff; }
+.repeatLink span { display: grid; flex: 1; min-width: 0; gap: 4px; }
+.repeatLink strong { font-size: 13px; font-weight: 600; }
+.repeatLink small { max-width: 100%; color: var(--feature-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repeatLink > svg { flex-shrink: 0; }
+.textLink:focus-visible, .programAction:focus-visible, .shortcut:focus-visible, .repeatLink:focus-visible, .details summary:focus-visible { outline: 2px solid #70a7ff; outline-offset: 3px; border-radius: 8px; }
+.details summary:focus-visible { outline-offset: -4px; }
+:global(html[data-theme="light"]) .textLink, :global(html[data-theme="light"]) .programLabel svg, :global(html[data-theme="light"]) .details summary > svg:first-child, :global(html[data-theme="light"]) .record > strong, :global(html[data-theme="light"]) .shortcut > svg:first-child, :global(html[data-theme="light"]) .repeatLink { color: #2563eb; }
+:global(html[data-theme="light"]) .today:not(.trainedDay) .dayMark { border-color: #2563eb; color: #2563eb; }
+@media (hover: hover) { .shortcut:hover { border-color: #3b82f6; background: var(--control); } .textLink:hover, .repeatLink:hover { color: #3b82f6; } .programAction:hover { background: #1d4ed8; } }
+@media (max-width: 420px) { .week, .program { padding: 17px; } .shortcut { gap: 8px; min-height: 80px; padding: 12px; } .shortcutArrow { display: none; } .shortcut strong { font-size: 13px; } .shortcut small { font-size: 10px; } .dayMark { width: 30px; height: 30px; } .weekDays { gap: 2px; } }
+@media (prefers-reduced-motion: reduce) { .chevron, .shortcut { transition: none; } }
