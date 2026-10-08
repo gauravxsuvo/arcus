@@ -34,6 +34,10 @@ Use bottom navigation on mobile and a persistent sidebar on desktop. Active work
 
 Label inputs, show field-level validation, preserve entered values on errors, and announce status changes accessibly. Empty, loading, offline, and failure states include a clear next action.
 
+## Navigation loading
+
+Assume route changes can take noticeable time because of network and database latency. Show loading feedback immediately for navigation that is waiting on destination content. Use only a spinner, circular progress indicator, progress bar, or percentage indicator; choose the clearest single treatment for the interaction. Show a percentage only when real progress can be measured. Keep the indicator accessible and respect reduced-motion preferences.
+
 ## Motion
 
 Use short, subtle transitions to clarify a control's response or a change in state. Training data and primary actions must be available immediately, without waiting for animation. Avoid autoplay, looping decoration, cinematic page transitions and staged text reveals. Honor reduced-motion preferences and preserve keyboard focus during transitions.
