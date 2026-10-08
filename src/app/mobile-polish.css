@@ -1,0 +1,63 @@
+/* Shared interaction rules; route layouts keep their existing visual design. */
+:root {
+  --glass-background:rgba(9,9,11,.75);
+  --glass-border:rgba(255,255,255,.1);
+}
+html[data-theme="light"] {
+  --glass-background:rgba(255,255,255,.75);
+  --glass-border:rgba(0,0,0,.05);
+}
+html, body { max-width:100%; overflow-x:hidden; }
+/* Clip sideways overflow without making body a separate sticky scroll container. */
+@supports (overflow:clip) { html,body { overflow-x:clip; } }
+html:has(.home-shell) { scroll-padding-top:calc(166px + env(safe-area-inset-top,0px) + 12px); }
+:where(main, section, article, fieldset) { min-width:0; }
+img, video { max-width:100%; }
+input[data-numeric] { min-height:44px; font-size:16px; font-variant-numeric:tabular-nums; }
+input[data-numeric][aria-invalid="true"] { outline:2px solid #e97373; outline-offset:2px; }
+:where(button, summary, a) { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+:where(button, a, summary):active { filter:brightness(.88); }
+button, a, summary { transition:scale .12s ease, opacity .12s ease, background-color .16s ease; }
+:where(button:not(:disabled), a, summary):active { scale:.96; opacity:.82; }
+/* Framer Motion owns these buttons' transform; avoid doubling the press scale. */
+button[data-motion-press]:active { scale:1; opacity:1; }
+.set-row { transition:background-color .18s ease; }
+.complete-set-active svg { animation:set-check-in .22s cubic-bezier(.22,1,.36,1); }
+.set-action-menu, .quick-start-menu, .home-menu { animation:menu-open .16s cubic-bezier(.22,1,.36,1); transform-origin:top right; }
+@keyframes set-check-in { from { transform:scale(.65); opacity:.4; } to { transform:scale(1); opacity:1; } }
+@keyframes menu-open { from { transform:translateY(-4px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+:where(button, a, summary, input, select, textarea):focus-visible { outline:2px solid #73aaff; outline-offset:3px; }
+.saving-spinner { flex-shrink:0; animation:save-spin .9s linear infinite; }
+@keyframes save-spin { to { transform:rotate(360deg); } }
+.workout-editor-save { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.profile-preferences { margin-top:32px; padding-top:20px; border-top:1px solid var(--feature-border); color:var(--feature-muted); font-size:12px; }
+.profile-preferences>div { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:22px; }
+.profile-preferences .nav-theme-toggle { width:auto; min-height:44px; margin:0; padding:0 14px; color:var(--feature-text); font-size:13px; }
+.not-found-shell { width:min(760px,100%); min-height:100dvh; margin:auto; padding:48px 24px calc(var(--mobile-nav-height) + 40px); }
+.not-found-shell>.brand { min-height:44px; margin-bottom:80px; }
+.not-found-shell h1 { font-size:clamp(38px,7vw,66px); letter-spacing:-.055em; line-height:1.08; }
+.not-found-shell>p:not(.eyebrow) { margin-block:24px 32px; color:var(--feature-muted); line-height:1.65; }
+.not-found-shell>div { display:flex; flex-wrap:wrap; gap:12px; }
+.not-found-shell>div>a { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:48px; }
+
+@media(max-width:760px) {
+  /* Minimum hit areas apply to controls, including icon-only actions. */
+  button, [role="button"], summary { min-width:44px !important; min-height:44px !important; }
+  a { display:inline-flex; align-items:center; min-width:44px; min-height:44px; }
+  :is(.back-link,.text-action,.brand,.activity-heading>a,.social-empty>a,.welcome-nav>a,.auth-switch>a) { display:inline-flex; align-items:center; min-width:44px; min-height:44px; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea { min-height:44px !important; }
+  input:not(.workout-name), select, textarea { font-size:16px !important; }
+  input[type="checkbox"], input[type="radio"] { width:24px; height:24px; flex-shrink:0; }
+  label:has(>input[type="checkbox"]), label:has(>input[type="radio"]) { display:flex; align-items:center; min-height:44px; gap:10px; }
+  input, textarea, select { scroll-margin-block:120px; }
+  .workout-edit-columns,.workout-edit-set-row { grid-template-columns:30px minmax(0,1fr) minmax(48px,.85fr) minmax(50px,.85fr) 44px; }
+  .workout-set-options>div { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .workout-set-options>div>button { justify-self:end; }
+  .not-found-shell>.brand { margin-bottom:60px; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .saving-spinner,.complete-set-active svg,.set-action-menu,.quick-start-menu,.home-menu { animation:none; }
+  button, a, summary,.set-row { transition:none; }
+  :where(button, a, summary):active { scale:1; }
+}

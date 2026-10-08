@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ShareCard } from "@/components/shared/share-card-generator";
+import { usePageTitle } from "@/components/shared/page-title";
 import { useProfile } from "@/components/shared/user-profile-provider";
 import { formatWeight,detectRecords } from "@/features/training/logic";
 import { useLocalRouteId } from "@/components/shared/use-local-route-id";
@@ -27,6 +28,7 @@ export default function WorkoutCompletePage() {
   const [workout, setWorkout] = useState<WorkoutRecord | null>(null);
   const [history, setHistory] = useState<WorkoutRecord[]>([]);
   const [ready, setReady] = useState(false);
+  usePageTitle(workout ? `${workout.name || "Workout"} · Complete` : "Workout complete");
   useEffect(() => {
     let cancelled = false;
     void Promise.all([getWorkoutById(id), getCompletedWorkouts()]).then(([current, completed]) => {

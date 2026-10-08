@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import type { WorkoutRecord } from "@/features/workouts/model";
 
 export const runtime = "edge";
 
 export async function POST(request: Request) {
   try {
-    const { workout, history } = await request.json();
+    const { workout, history } = await request.json() as { workout: WorkoutRecord; history: WorkoutRecord[] };
 
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({
@@ -17,9 +18,10 @@ export async function POST(request: Request) {
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+    const completedAt = workout.completedAt ?? workout.startedAt;
     const recentHistory = history
-      .filter((w: any) => w.id !== workout.id && new Date(w.completedAt) < new Date(workout.completedAt))
-      .sort((a: any, b: any) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+      .filter(w => w.completedAt && w.id !== workout.id && new Date(w.completedAt) < new Date(completedAt))
+      .sort((a, b) => Date.parse(b.completedAt ?? b.startedAt) - Date.parse(a.completedAt ?? a.startedAt))
       .slice(0, 10); // Look at last 10 workouts
 
     let prompt = `You are a supportive, analytical AI workout coach.
@@ -29,7 +31,7 @@ Current Workout:
 Name: ${workout.name}
 Date: ${workout.completedAt}
 Exercises:
-${workout.exercises.map((e: any) => `- ${e.name}: ${e.sets.filter((s:any)=>s.completed).length} sets`).join("\n")}
+${workout.exercises.map(e => `- ${e.name}: ${e.sets.filter(s => s.completed).length} sets`).join("\n")}
 
 `;
 
@@ -46,10 +48,10 @@ Return a JSON object exactly like this (no markdown block):
 }`;
     } else {
       prompt += `Previous Workouts (last ${recentHistory.length}):
-${JSON.stringify(recentHistory.map((w: any) => ({
+${JSON.stringify(recentHistory.map(w => ({
   name: w.name,
   date: w.completedAt,
-  exercises: w.exercises.map((e: any) => ({ name: e.name, sets: e.sets.filter((s:any)=>s.completed).map((s:any)=>({w:s.weight, r:s.reps})) }))
+  exercises: w.exercises.map(e => ({ name: e.name, sets: e.sets.filter(s => s.completed).map(s => ({w:s.weight, r:s.reps})) }))
 })))}
 
 Compare the Current Workout to their Previous Workouts. 

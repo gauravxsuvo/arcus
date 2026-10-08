@@ -2,13 +2,12 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { setTimeout as pause } from "node:timers/promises";
-import pg from "pg";
 import { loadPortwaysEnv } from "./portways-env.mjs";
+import { createPortwaysPool } from "../src/lib/db/portways-pool.mjs";
 
 await loadPortwaysEnv();
-if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for the integration check.");
 const origin = process.env.ARCUS_TEST_URL ?? "http://127.0.0.1:3000";
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1, connectionTimeoutMillis: 10_000, statement_timeout: 30_000 });
+const pool = createPortwaysPool({ max: 1 });
 const username = `avatar_check_${randomUUID().slice(0, 8)}`;
 const password = randomBytes(24).toString("base64url");
 const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=";

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#090909"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="128" y="104" fill="#fafafa" font-size="27" font-weight="700" letter-spacing="6">ARCUS.</text>
+    <text x="1132" y="101" fill="#a2a2a2" font-size="14" text-anchor="end" letter-spacing="3">YOUR TRAINING SPACE</text>
+    <path d="M68 143H1132" stroke="#272727"/>
+    <text x="64" y="269" fill="#fafafa" font-size="85" font-weight="700" letter-spacing="-4">Training, made</text>
+    <text x="64" y="363" fill="#fafafa" font-size="85" font-weight="700" letter-spacing="-4">measurable<tspan fill="#397fff">.</tspan></text>
+    <text x="68" y="439" fill="#a2a2a2" font-size="25">Show up. Track honestly. Get stronger.</text>
+    <path d="M68 508H1132" stroke="#272727"/>
+    <circle cx="76" cy="560" r="5" fill="#397fff"/>
+    <text x="96" y="565" fill="#b5b5b5" font-size="14" letter-spacing="2">ONE SESSION AT A TIME</text>
+    <text x="1132" y="565" fill="#a2a2a2" font-size="14" text-anchor="end" letter-spacing="2">LOG / REVIEW / PROGRESS</text>
+  </g>
+</svg>

@@ -1,3 +1,4 @@
+import { Copyright } from "@/components/shared/copyright";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, BarChart3, Dumbbell, History } from "lucide-react";
 import { ArcusMark } from "@/components/shared/arcus-mark";
@@ -40,6 +41,6 @@ export default function WelcomePage() {
       <section className="welcome-highlights" aria-label="What you can do in ARCUS">{highlights.map(({icon:Icon,title,description})=><article key={title}><span className="welcome-highlight-icon"><Icon size={20} aria-hidden="true"/></span><h2>{title}</h2><p>{description}</p></article>)}</section>
       <section className="welcome-bottom"><div><p className="welcome-kicker">YOUR NEXT SESSION</p><h2>Ready when you are.</h2><p>Start logging, or explore the exercise library first.</p></div><div><Link href="/dashboard">Open your training space <ArrowRight size={17} aria-hidden="true"/></Link><Link href="/exercises">Browse exercises</Link></div></section>
     </div>
-    <footer className="welcome-footer"><span>ARCUS TRAINING</span><span>CONSISTENCY OVER COMPLEXITY</span></footer>
+    <footer className="welcome-footer"><Copyright/><span>CONSISTENCY OVER COMPLEXITY</span></footer>
   </main>;
 }

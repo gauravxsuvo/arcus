@@ -1,5 +1,5 @@
-const CACHE_NAME = "arcus-shell-v10";
-const APP_ROUTES = ["/", "/welcome", "/login", "/signup", "/dashboard", "/workout", "/history", "/exercises", "/programs", "/progress", "/profile", "/profile/data", "/profile/edit", "/recaps", "/exercises/barbell-bench-press", "/history/offline", "/programs/offline", "/workout/complete/offline", "/sounds/timer-done.wav", "/demos/placeholder.svg", "/manifest.webmanifest", "/icon.svg", "/arcus-mark.svg", "/arcus-moon-logo.png", "/offline.html"];
+const CACHE_NAME = "arcus-shell-v12";
+const APP_ROUTES = ["/", "/welcome", "/login", "/signup", "/dashboard", "/workout", "/history", "/exercises", "/programs", "/progress", "/profile", "/profile/data", "/profile/edit", "/recaps", "/exercises/barbell-bench-press", "/history/offline", "/programs/offline", "/workout/complete/offline", "/sounds/timer-done.wav", "/demos/placeholder.svg", "/manifest.webmanifest", "/icon.svg", "/arcus-mark.svg", "/arcus-moon-logo.png", "/icons/brand-64.png", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/maskable-512.png", "/icons/apple-touch-icon.png", "/offline.html"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
@@ -16,7 +16,7 @@ self.addEventListener("install", (event) => {
       }
     }));
     // Fetch code and CSS as well as HTML so unopened feature pages can hydrate offline.
-    await Promise.allSettled([...bundles].map(async path=>{const response=await fetch(path);if(response.ok)await cache.put(path,response);}));
+    await Promise.allSettled([...bundles].map(async path=>{const response=await fetch(path);if(response.ok&&!response.headers.get("cache-control")?.includes("no-store"))await cache.put(path,response);}));
     await self.skipWaiting();
   })());
 });
@@ -62,6 +62,25 @@ self.addEventListener("fetch", (event) => {
         return response;
       } catch {
         return (await cache.match(request)) || new Response("This page has not been opened while online yet.", { status: 503 });
+      }
+    })());
+    return;
+  }
+
+  // Dev bundle URLs stay the same across edits. Fetch current code first so new
+  // server HTML cannot hydrate against an older cached component implementation.
+  // Production's immutable bundles still benefit from the browser's HTTP cache;
+  // the shell cache remains a fallback when the network is unavailable.
+  if (url.pathname.startsWith("/_next/")) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        const response = await fetch(request);
+        if (response.headers.get("cache-control")?.includes("no-store")) await cache.delete(request);
+        else if (response.ok) await cache.put(request, response.clone());
+        return response;
+      } catch {
+        return (await cache.match(request)) || Response.error();
       }
     })());
     return;

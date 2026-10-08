@@ -5,10 +5,10 @@ import { useEffect } from "react";
 export function ServiceWorkerRegistration() {
   useEffect(() => {
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-      void navigator.serviceWorker.register("/sw.js").then(async()=>{
+      void navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then(async()=>{
         await navigator.serviceWorker.ready;
         if(!navigator.serviceWorker.controller)await new Promise<void>(resolve=>navigator.serviceWorker.addEventListener("controllerchange",()=>resolve(),{once:true}));
-        if(navigator.onLine){const results=await Promise.allSettled([import("@/components/progress/advanced-analytics"),import("@/components/shared/plate-calculator")]);if(results.every(result=>result.status==="fulfilled"))document.documentElement.dataset.offlineReady="true";}
+        if(navigator.onLine){const results=await Promise.allSettled([import("@/components/progress/advanced-analytics"),import("@/components/progress/progress-charts"),import("@/components/shared/plate-calculator")]);if(results.every(result=>result.status==="fulfilled"))document.documentElement.dataset.offlineReady="true";}
       }).catch((error: unknown) => {
         console.error("Service worker registration failed", error);
       });

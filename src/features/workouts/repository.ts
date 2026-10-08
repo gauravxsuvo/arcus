@@ -1,4 +1,5 @@
 import type { WorkoutRecord } from "./model";
+import { clearActiveDraft, readActiveDraft, selectActiveDraft, writeActiveDraft } from "./draft-backup";
 
 const DATABASE = "ARCUS-training";
 const VERSION = 1;
@@ -48,7 +49,10 @@ async function transact<T>(mode: IDBTransactionMode, action: (store: IDBObjectSt
 }
 
 export async function saveWorkout(workout: WorkoutRecord): Promise<void> {
-  await transact("readwrite", (store) => store.put({ ...workout, updatedAt: new Date().toISOString() }));
+  const revision = { ...workout, updatedAt: new Date().toISOString() };
+  if (revision.status === "active") writeActiveDraft(revision);
+  await transact("readwrite", (store) => store.put(revision));
+  if (revision.status === "completed") clearActiveDraft(revision.id);
 }
 
 // Server acknowledgements and restores preserve the original revision.
@@ -66,8 +70,19 @@ export async function saveWorkouts(workouts: WorkoutRecord[]): Promise<void> {
 }
 
 export async function getActiveWorkout(): Promise<WorkoutRecord | null> {
+  const backup = readActiveDraft();
   const rows = await transact<WorkoutRecord[]>("readonly", (store) => store.index("status").getAll("active"));
-  return rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
+  const active = rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
+  if (!backup) { if (active) writeActiveDraft(active); return active; }
+  const persistedBackup = rows.find(row => row.id === backup.id) ?? await getWorkoutById(backup.id);
+  const recovered = selectActiveDraft(active, backup, persistedBackup);
+  if (recovered === backup) {
+    if (!persistedBackup || JSON.stringify(persistedBackup) !== JSON.stringify(backup)) await cacheWorkout(backup);
+    return backup;
+  }
+  clearActiveDraft(backup.id);
+  if (active) writeActiveDraft(active);
+  return active;
 }
 
 export async function getWorkoutById(id: string): Promise<WorkoutRecord | null> {
@@ -94,4 +109,5 @@ export async function deleteWorkoutsByImportBatch(batchId: string): Promise<numb
 
 export async function deleteWorkout(id: string): Promise<void> {
   await transact("readwrite", (store) => store.delete(id));
+  clearActiveDraft(id);
 }

@@ -1,0 +1,5 @@
+.track { position:relative; isolation:isolate; min-width:0; }
+.front { position:relative; min-width:0; background:var(--workout-card,var(--feature-card)); }
+.delete { position:absolute; inset:0 0 0 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; width:100px; border-radius:10px; background:#b91c1c; color:#fff; font-size:13px; font-weight:600; }
+.delete[data-armed="true"] { background:#991b1b; }
+.delete>svg { width:24px; height:24px; }

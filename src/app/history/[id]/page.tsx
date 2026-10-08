@@ -6,6 +6,7 @@ import { getCompletedWorkouts,getWorkoutById } from "@/features/workouts/reposit
 import type { WorkoutRecord } from "@/features/workouts/model";
 import { WorkoutDetail } from "@/components/history/workout-detail";
 import { WorkoutEditor } from "@/components/history/workout-editor";
+import { usePageTitle } from "@/components/shared/page-title";
 
 export default function HistoryDetail() {
   const id = useLocalRouteId();
@@ -14,6 +15,7 @@ export default function HistoryDetail() {
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
+  usePageTitle(workout ? `${editing ? "Edit " : ""}${workout.name || "Workout"}` : "Workout history");
   useEffect(() => {
     let cancelled = false;
     setReady(false);

@@ -78,6 +78,11 @@
 .shell :global(.section-heading) { flex-wrap: wrap; gap: 12px; padding-block: 24px 16px; margin: 0; }
 .shell :global(.section-heading h2) { margin: 0; font-size: 23px; letter-spacing: -.03em; }
 .sectionHint { margin: 6px 0 0; color: var(--workout-muted); font-size: 12px; line-height: 1.5; }
+.plateShortcut { display:flex; align-items:center; gap:8px; width:fit-content; min-height:44px; margin:0 0 8px; padding:0 12px; border:1px solid var(--workout-border); border-radius:9px; background:var(--workout-control); color:var(--workout-text); font-size:12px; }
+.plateShortcut>svg { color:var(--workout-muted); }
+.shell :global(.previous-set) { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; min-height:32px; color:var(--workout-muted); font-size:12px; }
+.shell :global(.previous-set strong) { font-weight:400; color:var(--workout-text); }
+.shell :global(.previous-set button) { flex-shrink:0; min-width:44px; min-height:44px; padding:0 8px; border:0; border-radius:7px; background:var(--workout-soft-blue); color:var(--workout-blue); font-size:12px; }
 .addExercise { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; min-height: 46px; padding: 0 14px; border: 1px solid #36598b; border-radius: 11px; background: var(--workout-soft-blue); color: #80b0ff; font-size: 14px; font-weight: 600; }
 .shell :global(.empty-exercises) { display: flex; align-items: center; flex-direction: column; gap: 13px; padding: 42px 20px; margin-top: 5px; border: 1px dashed var(--workout-border); border-radius: 18px; background: var(--workout-card); text-align: center; }
 .shell :global(.empty-mark) { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; color: #80b0ff; background: var(--workout-soft-blue); }
@@ -102,6 +107,10 @@
 .shell :global(.set-table-head) { min-height: 35px; color: var(--workout-muted); font: 10px Arial, sans-serif; letter-spacing: .05em; }
 .shell :global(.set-row) { min-height: 62px; padding-block: 8px; border-color: var(--workout-border); border-radius: 7px; }
 .shell :global(.set-index) { color: var(--workout-muted); font: 600 14px Arial, sans-serif; }
+.shell :global(.set-index-label), .shell :global(.stepper-label), .shell :global(.set-effort > span) { display: none; }
+.shell :global(.set-effort) { min-width: 0; }
+.shell :global(.set-effort select) { width: 100%; }
+.shell :global(.set-validation-error) { grid-column: 1 / -1; margin: 4px 0; color: #f3a3a3; font-size: 13px; line-height: 1.5; }
 .shell :global(.set-row-done) { background: #3b82f60d; }
 .shell :global(.set-row-warmup) { background: #e7ac2310; }
 .shell :global(.number-stepper) { min-width: 0; min-height: 46px; border-color: var(--workout-border); border-radius: 9px; background: var(--workout-control); }
@@ -188,9 +197,20 @@
   .shell :global(.exercise-actions) { flex-basis: 100%; justify-content: flex-end; margin-top: -3px; }
   .shell :global(.exercise-title) { flex-basis: 100%; }
   .shell :global(.exercise-title h3) { font-size: 17px; }
-  .shell :global(.set-table-head), .shell :global(.set-row) { grid-template-columns: 20px minmax(0, 1fr) minmax(0, .9fr) minmax(0, .8fr) 88px; gap: 5px; }
-  .shell :global(.set-row-actions) { gap: 0; }
-  .shell :global(.number-stepper > button) { display: none; }
+  .shell :global(.set-table-head) { display: none; }
+  .shell :global(.set-row) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-block: 16px; border-radius: 0; }
+  .shell :global(.set-index) { grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 5px; }
+  .shell :global(.set-index-label) { display: inline; font-weight: 400; }
+  .shell :global(.set-row-actions) { grid-column: 2; grid-row: 1; justify-self: end; gap: 4px; }
+  .shell :global(.number-stepper) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; grid-row: 2; padding: 8px; background: var(--workout-control); overflow: hidden; }
+  .shell :global(.stepper-label) { display: block; grid-column: 1 / -1; grid-row: 1; padding-bottom: 6px; text-align: center; color: var(--workout-muted); font-size: 11px; }
+  .shell :global(.number-stepper > input) { grid-column: 1 / -1; grid-row: 2; min-height: 48px; margin-bottom: 6px; font-size: 22px !important; }
+  .shell :global(.number-stepper > button) { display: grid; place-items: center; grid-row: 3; min-width: 44px; min-height: 44px; width: 100%; padding: 0; border: 1px solid var(--workout-border); border-radius: 7px; background: var(--workout-card); color: var(--workout-text); font-size: 23px; }
+  .shell :global(.number-stepper > button:last-child) { margin-left: 4px; width: calc(100% - 4px); }
+  .shell :global(.set-effort) { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .shell :global(.set-effort > span) { display: block; color: var(--workout-muted); font-size: 12px; }
+  .shell :global(.set-effort select) { width: 88px; }
+  .shell :global(.effort-picks summary) { padding-block: 10px; }
   .shell :global(.set-row input) { font-size: 16px; }
   .restTimer { top: 78px; gap: 8px; padding: 10px; }
   .restTime { gap: 7px; }
@@ -210,7 +230,6 @@
   .shell :global(.session-summary) strong { font-size: 16px; }
   .shell :global(.session-summary) span { font-size: 10px; }
   .shell :global(.exercise-card) { padding-inline: 10px; }
-  .shell :global(.set-table-head), .shell :global(.set-row) { grid-template-columns: 16px repeat(3, minmax(0, 1fr)) 88px; gap: 4px; }
   .restTimer { gap: 5px; padding-inline: 7px; }
   .restTime > svg { display: none; }
   .restControls button { padding-inline: 1px; }
