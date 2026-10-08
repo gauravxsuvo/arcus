@@ -1,5 +1,11 @@
 # Design system
 
+## Product direction
+
+ARCUS is a focused training product with a minimal, editorial interface. Build hierarchy with typography, spacing and alignment; use a restrained accent for primary actions and meaningful states. Favor readable content, calm surfaces and one clear next action over decorative effects. Keep the visual language consistent across Home, workout logging, history, progress and profile, on mobile and desktop.
+
+Instagram Reels and other promotional films are separate media exports. Do not introduce film playback, soundtracks, chapters, automatic storytelling sequences or promotional transitions into website routes or product screens.
+
 ## Typography
 
 Use a clear sans-serif interface with tabular numerals for weights, reps, timers, and analytics. Establish hierarchy through size and weight: page title, section heading, body, then muted metadata. Avoid oversized marketing-style headings inside the workout flow.
@@ -27,3 +33,7 @@ Use bottom navigation on mobile and a persistent sidebar on desktop. Active work
 ## Forms and feedback
 
 Label inputs, show field-level validation, preserve entered values on errors, and announce status changes accessibly. Empty, loading, offline, and failure states include a clear next action.
+
+## Motion
+
+Use short, subtle transitions to clarify a control's response or a change in state. Training data and primary actions must be available immediately, without waiting for animation. Avoid autoplay, looping decoration, cinematic page transitions and staged text reveals. Honor reduced-motion preferences and preserve keyboard focus during transitions.

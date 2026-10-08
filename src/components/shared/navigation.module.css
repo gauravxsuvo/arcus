@@ -4,7 +4,23 @@
 :global(body.workout-editing) .mobile:global(.mobile-navigation),:global(body.workout-editing) .desktop:global(.desktop-navigation) { display:none; }
 :global(html[data-theme=light]) .desktop:global(.desktop-navigation)>a[aria-current] { color:#2563eb; }
 @media(max-width:760px) {
-  .mobile:global(.mobile-navigation) { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); align-items:center; gap:5px; padding:8px max(12px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px)); min-height:var(--mobile-nav-height); background:var(--feature-card); border-color:var(--feature-border); backdrop-filter:blur(16px); }
+  .mobile:global(.mobile-navigation) {
+    position:fixed;
+    z-index:50;
+    inset:auto 0 0;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    align-items:center;
+    gap:5px;
+    padding:8px max(12px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+    height:auto;
+    min-height:var(--mobile-nav-height);
+    background:var(--glass-background);
+    border-top:1px solid var(--glass-border);
+    -webkit-backdrop-filter:blur(16px) saturate(180%);
+    backdrop-filter:blur(16px) saturate(180%);
+    transform:translate3d(0,0,0);
+  }
   .mobile:global(.mobile-navigation)>a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-width:0; min-height:52px; padding:5px 4px; border-radius:12px; color:var(--feature-muted); font-size:11px; font-weight:500; animation:none; }
   .mobile:global(.mobile-navigation)>a>svg { width:22px; height:22px; }
   .mobile:global(.mobile-navigation)>a[aria-current] { background:#3b82f614; color:#72a7ff; }

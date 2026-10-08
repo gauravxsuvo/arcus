@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 
-const envFile = new URL("../.env.portways.local", import.meta.url);
+// Prefer the shared app configuration; retain the Portways-only file as a
+// fallback for existing bridge tooling. Values already in the process win.
+const envFiles = [new URL("../.env.local", import.meta.url), new URL("../.env.portways.local", import.meta.url)];
 
 function parseEnv(contents) {
   const values = new Map();
@@ -17,15 +19,17 @@ function parseEnv(contents) {
 }
 
 export async function loadPortwaysEnv() {
-  let contents;
-  try {
-    contents = await readFile(envFile, "utf8");
-  } catch (error) {
-    if (error?.code === "ENOENT") return;
-    throw error;
-  }
+  for (const envFile of envFiles) {
+    let contents;
+    try {
+      contents = await readFile(envFile, "utf8");
+    } catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
 
-  for (const [name, value] of parseEnv(contents)) {
-    if (process.env[name] === undefined) process.env[name] = value;
+    for (const [name, value] of parseEnv(contents)) {
+      if (process.env[name] === undefined) process.env[name] = value;
+    }
   }
 }

@@ -6,17 +6,18 @@ import type { Exercise } from "@/features/exercises/catalog";
 import { exerciseContent } from "@/features/exercises/content";
 import { filterPickerExercises, type PickerFilters, type PickerPreference } from "@/features/exercises/picker";
 
-export function ExercisePicker({ catalog, preferences, addedIds, onAdd, onClose }: {
+export function ExercisePicker({ catalog, preferences, addedIds, onAdd, onClose, autoFocusSearch = true }: {
   catalog: Exercise[]; preferences: PickerPreference[]; addedIds: string[];
   onAdd: (exercise: Exercise) => void; onClose: () => void;
+  autoFocusSearch?: boolean;
 }) {
   const [filters, setFilters] = useState<PickerFilters>({ query: "", muscle: "", equipment: "", collection: "all" });
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const previous = document.activeElement;
-    searchRef.current?.focus();
+    if (autoFocusSearch) searchRef.current?.focus();
     return () => { if (previous instanceof HTMLElement && previous.isConnected) previous.focus(); };
-  }, []);
+  }, [autoFocusSearch]);
   const muscles = useMemo(() => [...new Set(catalog.flatMap(exercise => {
     const content = exerciseContent(exercise); return [...content.primary, ...content.secondary];
   }))].sort(), [catalog]);

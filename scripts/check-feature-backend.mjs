@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { randomUUID,randomBytes } from "node:crypto";
 import { setTimeout as pause } from "node:timers/promises";
-import pg from "pg";
 import { loadPortwaysEnv } from "./portways-env.mjs";
+import { createPortwaysPool } from "../src/lib/db/portways-pool.mjs";
 import { createTemplateProgram } from "../src/features/programs/templates.ts";
 await loadPortwaysEnv();
 const origin=process.env.ARCUS_TEST_URL??"http://127.0.0.1:3000";
-const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:1,connectionTimeoutMillis:10000,statement_timeout:30000});
+const pool=createPortwaysPool({max:1});
 const accounts=[];
 async function request(path,{body,cookie,status=200,method}={}){
  await pause(1100);

@@ -1,0 +1,10 @@
+.toast { position:fixed; z-index:60; bottom:24px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:12px; width:max-content; max-width:min(480px,calc(100% - 32px)); padding:8px 8px 8px 16px; border:1px solid var(--feature-border); border-radius:14px; background:var(--feature-card); color:var(--feature-text); box-shadow:0 8px 28px #0003; font-size:14px; line-height:1.5; }
+.toast>svg { flex-shrink:0; color:#73aaff; }
+.toast>span { min-width:0; overflow-wrap:anywhere; }
+.toast button { display:grid; place-items:center; flex-shrink:0; width:44px; height:44px; border:0; border-radius:9px; background:transparent; color:var(--feature-muted); cursor:pointer; }
+.toast button:focus-visible { outline:2px solid #73aaff; }
+.toast button.action { width:auto; min-width:60px; padding-inline:12px; color:#73aaff; font-size:14px; font-weight:600; }
+:global(html[data-theme="light"]) .toast button.action { color:#245db6; }
+.error { border-color:#e9737370; }
+.error>svg { color:#e97373; }
+@media(max-width:760px) { .toast { bottom:calc(var(--mobile-nav-height) + 16px); } }

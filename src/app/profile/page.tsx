@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeToggle } from "@/components/shared/theme-provider";
+import { Copyright } from "@/components/shared/copyright";
 import { GoalSummary } from "@/components/shared/goal-summary";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -144,5 +146,6 @@ export default function ProfilePage() {
       {profile && <section className="profile-account-actions"><Link href="/profile/edit">Customize profile <ArrowRight size={15}/></Link><button onClick={() => void signOut()}><LogOut size={15}/> Sign out</button></section>}
     </>}
     {error && <p role="alert" className="auth-error">{error}</p>}
+    <footer className="profile-preferences"><div><span>Appearance</span><ThemeToggle/></div><Copyright/></footer>
   </main>;
 }

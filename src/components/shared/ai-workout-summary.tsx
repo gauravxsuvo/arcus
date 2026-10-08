@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Activity } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { WorkoutRecord } from "@/features/workouts/model";
 
 interface AiSummary {

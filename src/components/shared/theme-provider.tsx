@@ -2,10 +2,17 @@
 import { createContext, useContext, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useProfile } from "./user-profile-provider";
+import { THEME_COLORS } from "@/features/profile/theme";
 const ThemeContext=createContext<{theme:"dark"|"light";toggle:()=>void}|null>(null);
 export function ThemeProvider({children}:{children:React.ReactNode}) {
   const {preferences,setPreferences,ready}=useProfile();
-  useEffect(() => { if(ready) { document.documentElement.dataset.theme=preferences.theme;try{localStorage.setItem("arcus-theme",preferences.theme);}catch{}const meta=document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');if(meta)meta.content=preferences.theme==="light"?"#fafafa":"#09090b"; } },[preferences.theme,ready]);
+  useEffect(() => {
+    if (!ready) return;
+    document.documentElement.dataset.theme = preferences.theme;
+    try { localStorage.setItem("arcus-theme", preferences.theme); } catch {}
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (meta) meta.content = THEME_COLORS[preferences.theme];
+  }, [preferences.theme, ready]);
   const toggle=()=>void setPreferences({...preferences,theme:preferences.theme==="dark"?"light":"dark"});
   return <ThemeContext.Provider value={{theme:preferences.theme,toggle}}>{children}</ThemeContext.Provider>;
 }

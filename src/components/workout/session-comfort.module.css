@@ -1,0 +1,13 @@
+.panel { margin:16px 0; border-block:1px solid var(--workout-border); color:var(--workout-text); }
+.panel summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; cursor:pointer; font-size:13px; }
+.panel summary>span { display:flex; align-items:center; gap:8px; }
+.panel summary small { color:var(--workout-muted); font-size:11px; }
+.panel summary svg { color:var(--workout-muted); }
+.controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding-block:6px 12px; }
+.controls label { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:58px; cursor:pointer; }
+.controls strong { display:block; font-size:13px; font-weight:500; }
+.controls small { display:block; margin-top:5px; color:var(--workout-muted); font-size:11px; line-height:1.5; }
+.controls input { flex-shrink:0; width:44px; height:44px; accent-color:var(--workout-blue); cursor:pointer; }
+.controls input:disabled { opacity:.45; cursor:default; }
+.panel>p { margin:0 0 16px; color:var(--workout-muted); font-size:11px; line-height:1.6; }
+@media(max-width:760px) { .controls { grid-template-columns:minmax(0,1fr); gap:2px; }.controls label { min-height:68px; }.panel summary small { font-size:10px; } }

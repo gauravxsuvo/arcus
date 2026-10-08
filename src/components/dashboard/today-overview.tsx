@@ -18,8 +18,10 @@ export function TodayOverview({ workouts, active, ready = true }: TodayOverviewP
   const { user, preferences, ready: profileReady } = useProfile();
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [programsReady, setProgramsReady] = useState(false);
+  const [clientReady, setClientReady] = useState(false);
 
   useEffect(() => {
+    setClientReady(true);
     let mounted = true;
     void listPrograms()
       .then((saved) => { if (mounted) setPrograms(saved); })
@@ -31,7 +33,7 @@ export function TodayOverview({ workouts, active, ready = true }: TodayOverviewP
   const enrolled = user?.profile.activeProgram;
   const program = programs.find((saved) => saved.id === enrolled?.programId);
   const schedule = program && enrolled ? programSchedule(program, enrolled) : null;
-  const loaded = ready && profileReady && (!enrolled || programsReady);
+  const loaded = clientReady && ready && profileReady && (!enrolled || programsReady);
   const now = new Date();
   const stats = consistency(workouts, now, preferences.weekStart);
   const target = Math.max(1, Math.min(7, program?.daysPerWeek ?? 3));
@@ -54,11 +56,11 @@ export function TodayOverview({ workouts, active, ready = true }: TodayOverviewP
         <Link className={styles.textLink} href="/recaps">Recap <ArrowRight size={16} aria-hidden="true" /></Link>
       </div>
       <ol className={styles.weekDays} aria-label="This week’s training activity">
-        {weekDays.map(({ day, completed, today }) => <li key={dateKey(day)}
-          className={`${styles.weekDay} ${loaded && completed ? styles.trainedDay : ""} ${today ? styles.today : ""}`}
-          aria-label={`${day.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}: ${!loaded ? "loading" : completed ? "workout completed" : day > now ? "upcoming" : "no completed workout"}${today ? ", today" : ""}`}>
-          <span aria-hidden="true">{day.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)}</span>
-          <span className={`${styles.dayMark} ${!loaded ? styles.loadingMark : ""}`} aria-hidden="true">{loaded && completed ? <Check size={18} strokeWidth={2.5} /> : day.getDate()}</span>
+        {weekDays.map(({ day, completed, today }, index) => <li key={dateKey(day)}
+          className={`${styles.weekDay} ${loaded && completed ? styles.trainedDay : ""} ${loaded && today ? styles.today : ""}`}
+          aria-label={loaded ? `${day.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}: ${completed ? "workout completed" : day > now ? "upcoming" : "no completed workout"}${today ? ", today" : ""}` : `Training day ${index + 1}: loading`}>
+          <span aria-hidden="true">{loaded ? day.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2) : "—"}</span>
+          <span className={`${styles.dayMark} ${!loaded ? styles.loadingMark : ""}`} aria-hidden="true">{!loaded ? "—" : completed ? <Check size={18} strokeWidth={2.5} /> : day.getDate()}</span>
         </li>)}
       </ol>
       <div className={styles.weekFooter}>

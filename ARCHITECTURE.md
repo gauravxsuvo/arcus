@@ -1,5 +1,19 @@
 # Arcus architecture
 
+## Mobile interaction polish
+
+The current routes and providers remain intact. Shared presentation primitives under `components/shared` supply numeric text fields, accessible save toasts, route/workout titles and the current-year footer. Workout CSS reflows set controls on mobile so weight/reps and their increment buttons stay comfortably tappable without horizontal scrolling. Page-specific structure and semantic dark/light theme tokens remain the visual foundation.
+
+`features/workouts/draft-backup.ts` owns a validated, single active-workout localStorage snapshot. IndexedDB remains the authoritative workout/history store and the existing sync outbox. The logger writes its newest revision synchronously before queuing IndexedDB writes, so an older queued write cannot overwrite the emergency snapshot. Recovery checks completion/deletion and revision order before restoring a draft. This backup contains workout data only; it does not contain credentials, profiles or sessions. Finishing/deleting removes only the matching active snapshot. Production offline code/static asset caching and paced PostgreSQL sync retain their existing boundaries.
+
+Install icons are generated from the supplied ARCUS logo and served from `public/icons`. The manifest, Apple touch icon and theme-color metadata use the same product identity. Unknown routes show the 404 recovery screen. See `MOBILE_UX_ASSESSMENT.md` for the 20-item audit and verification scope.
+
+## Product and social-media boundaries
+
+Promotional films are standalone Instagram/social-media assets, outside the website's routes, layouts, providers and product interactions. There is no `/promo` route. Exported media and archived creative sources remain in the ignored `artifacts/promo/` directory and are not served by Next.js. The application uses its normal profile, theme, workout, offline and sync providers without a film-specific runtime or preview account context.
+
+The website follows the typography-led, minimal editorial direction in `DESIGN_SYSTEM.md`: readable training data, deliberate spacing, clear hierarchy and restrained motion that helps people use the app. Film playback, soundtrack, chapter navigation and animated storytelling belong exclusively to social exports.
+
 ## Saved workout editing
 
 `/history/[id]?edit=1` opens the saved-workout editor using the existing dynamic history shell, including offline fallback. `components/history/workout-editor.tsx` holds an isolated draft: Cancel discards changes, while Save validates with `features/workouts/edit.ts`, writes the same workout ID to IndexedDB and marks the new revision pending for the existing paced sync manager. Duration and date edits produce a consistent start/completion pair. Set types, groups, program references and import metadata remain intact.
@@ -138,7 +152,7 @@ All local writes happen before the UI acknowledges a mutation. Client-generated 
 - Saving a profile online updates the account photo and the IndexedDB cache. Login and `/api/auth/me` restore the saved photo. Omitting a photo in an API update preserves it; `null` removes it. Offline saves remain on the device with an explicit sync-unavailable notice; profile changes do not use the workout sync queue.
 - `arcus_sessions` stores hashed HTTP-only session tokens with a 30-day expiry.
 - `arcus_workouts` stores the complete local workout payload per account and client ID, so retries are idempotent.
-- The server connects through `scripts/portways-db-bridge.mjs` on `127.0.0.1`; `DATABASE_URL` never points directly to the hosted database.
+- The server uses `@neondatabase/serverless` to open PostgreSQL over Portways' secure WebSocket gateway, with the database token sent as the `portways-token.<token>` WebSocket subprotocol. `PORTWAYS_DB_TOKEN`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE` are server-only environment variables shared by local development and Vercel. The app keeps one module-level pool per runtime with a maximum of three connections, a five-minute idle timeout, and a one-hour connection lifetime. The local bridge remains available for external database tools; runtime app requests do not depend on it.
 
 ### Local import metadata
 
@@ -196,11 +210,29 @@ Add a new route only when it represents a distinct user goal. Settings, sync sta
 
 Import flow is separate from sync: browser file → detect → validate → map → preview/dry-run → explicit confirmation → local IndexedDB transaction → normal analytics/history reads → optional background sync. A raw CSV is not sent to the server during analysis.
 
-The service worker caches the app shell and static assets. It does not cache private workout records or credentials.
+The service worker caches the app shell and static assets. It does not cache private workout records or credentials. Next.js code and CSS use the network first, with cached production assets available offline; responses marked `no-store` never remain in the shell cache. Production registration bypasses the browser's script cache when checking worker updates.
+
+Development server HTML runs `features/offline/development-worker-reset.ts` before the app mounts. It removes only ARCUS/legacy Forge shell caches and the same-origin `/sw.js` registration, then reloads once if that worker controlled the page. IndexedDB, account data, workouts and localStorage preferences are untouched. This prevents an earlier production worker from serving obsolete development bundles at stable chunk URLs. The weekly overview uses identical placeholders until its own client mount and data load, then formats dates in the browser's locale and timezone.
 
 HEVY compatibility is intentionally conservative. HEVY's help centre documents exporting workout/measurement data and importing Strong CSV files, but does not publish a complete current workout-export schema. The adapter supports documented Strong-style columns and common HEVY aliases, surfaces unknown/missing columns, and does not claim official round-trip compatibility without a real HEVY sample. Sources: [Hevy export help](https://help.hevyapp.com/hc/en-us/articles/43708290987415-Exporting-Your-Data-from-Hevy) and [Hevy Strong CSV help](https://help.hevyapp.com/hc/en-us/articles/38001424401943/How-to-Import-Strong-App-CSV-Files-and-Export-Your-Data-in-Hevy).
 
 ## Mobile-first interaction rules
+
+Active workout sets use Framer Motion (`framer-motion`) for height/opacity presence animation, constrained horizontal drag, and shared button press feedback. Swipes start only on non-interactive row areas, preserve vertical scrolling with `touch-action: pan-y`, and delete only after at least 75 px of actual left displacement. Drag momentum and rightward elasticity are disabled. Short swipes spring to zero; reduced-motion users get an immediate reset. Deletions retain the last-set guard, normal menu alternative and serialized local saves. A temporary Undo action reinserts only the removed set into the latest active draft, preserving intervening edits, added sets, effort and completion metadata. Exiting rows are inert and restore focus to Add set. The shared sheet uses the same Framer Motion package, avoiding duplicate animation dependencies.
+
+The dashboard's existing module header is sticky and reserves its own height in normal flow; the shared `.mobile-navigation` remains fixed. Both use `--glass-background` and `--glass-border` theme tokens, prefixed/unprefixed backdrop blur with saturation, a static compositor transform, and z-index 50. Dashboard gutters extend the glass to the page edges while preserving safe-area insets. Mobile feed padding and scroll padding leave the last item above the nav. Supported browsers use overflow clipping rather than a separate body overflow container so the header can stick to the viewport. The global light-theme surface rule excludes the nav to avoid replacing its translucent background.
+
+Workout assistance lives in `features/workouts/set-assistance.ts`, keeping copying and historical matching independent of UI and persistence. Auto-fill changes only the immediately following blank, unfinished working set; planned/edited values, warm-ups, drop sets and effort retain their meaning. Historical values match by exercise ID and ordinal within set type. `components/workout/previous-set.tsx` exposes those measurements and an explicit Use action. Every resulting change goes through the existing draft backup and serialized IndexedDB save queue. Newly started sessions refresh local completed history first.
+
+`components/workout/use-session-comfort.ts` owns validated, device-local preferences in `arcus-session-comfort-v1`; they do not change the account profile or server data model. The screen wake lock is opt-in and scoped to a visible active workout. `features/device/screen-wake-lock.ts` manages one lock, releases it when hidden/finished/unmounted, handles in-flight cleanup, and reacquires on returning to the page. Denied requests never cause a retry loop. Supported browsers provide brief vibration for set completion and rest completion. The existing plate engine is reused in an exercise-scoped sheet; all stored loads remain kg. Production offline preparation also warms the route-loaded progress chart bundle alongside existing analytics and plate tools.
+
+Progress charts are derived locally from completed workout records. `features/analytics/chart-data.ts` prepares a chronological, bounded exercise series using the existing 1RM engine; weekly volume uses the existing calendar-week aggregation. `components/progress` holds route-loaded Recharts views, themed tooltips and accessible data tables. Persisted weights stay in kg; the view converts both charts and tooltips to the user's units.
+
+`components/shared/route-transition.tsx` animates bottom-tab content entry without replacing route state or providers. Shared motion primitives use Motion's animation-only feature bundle for set-row presence and a native dialog sheet. The exercise picker reuses its filters inside that sheet. Data mutations/save queues remain independent of animation, and exiting rows become inert. Native dialogs own keyboard trapping; focus and body scroll are restored on close. All motion follows reduced-motion preferences; promotional media remains separate.
+
+Root metadata provides the constrained, safe-area-aware viewport, a dedicated 180 px Apple touch icon and Open Graph/Twitter cards. The sharing image is a static 1200 × 630 PNG derived from the existing logo and an editable SVG; no rendering service or external font is needed. Set server-side `SITE_URL` to the actual public deployment origin for absolute sharing URLs. Vercel's production URL is the next fallback, followed by its preview URL and localhost for development. A temporary tunnel or untrusted request Host header is never used as the canonical sharing origin.
+
+The saved theme is applied before React mounts. An inline bootstrap creates and owns one mutable `theme-color` tag; the static Next viewport intentionally omits that field, so React does not duplicate a tag whose content changed before hydration. A raw `noscript` fallback supplies the default dark color without hoisting another active tag when JavaScript is enabled. The existing profile preference provider owns subsequent theme changes, using the same canvas colors. Numeric text inputs use the decimal keypad and a fractional pattern for loads; whole-number reps/sets use the numeric keypad and integer pattern.
 
 - Test first at 360, 375, 390, 412, and 430 px.
 - Critical controls are at least 44 px; complete set, add set, timer, and finish are preferred at 48 px.
