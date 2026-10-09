@@ -1,5 +1,4 @@
 import { Pool, neonConfig } from "@neondatabase/serverless";
-import WebSocket from "ws";
 
 let configuredToken;
 
@@ -18,10 +17,12 @@ function configurePortwaysWebSocket(token) {
 
   neonConfig.wsProxy = () => "db.portways.app/v1";
   neonConfig.useSecureWebSocket = true;
-  neonConfig.pipelineConnect = false;
-  neonConfig.webSocketConstructor = class PortwaysWebSocket extends WebSocket {
+  neonConfig.pipelineConnect = false; // the gateway's databases use SCRAM
+  
+  // The token rides in the WebSocket subprotocol, never in the URL.
+  neonConfig.webSocketConstructor = class extends WebSocket {
     constructor(url) {
-      super(url, [`portways-token.${token}`]);
+      super(url, ["portways-token." + token]);
     }
   };
   configuredToken = token;
@@ -29,13 +30,11 @@ function configurePortwaysWebSocket(token) {
 
 export function createPortwaysPool({ max = 3 } = {}) {
   const token = requiredEnv("PORTWAYS_DB_TOKEN");
-  const user = requiredEnv("PGUSER");
   const password = requiredEnv("PGPASSWORD");
-  const database = requiredEnv("PGDATABASE");
 
   configurePortwaysWebSocket(token);
 
-  const connectionString = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@portways/${encodeURIComponent(database)}`;
+  const connectionString = "postgresql://remote_6:" + encodeURIComponent(password) + "@portways/arcus_postgres";
 
   return new Pool({
     connectionString,

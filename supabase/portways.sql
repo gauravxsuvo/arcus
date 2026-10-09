@@ -70,3 +70,4 @@ create table if not exists public.arcus_workouts (
 );
 
 create index if not exists arcus_workouts_account_idx on public.arcus_workouts(account_id, updated_at desc);
+alter table public.arcus_accounts add column if not exists mfa_secret text;

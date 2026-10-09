@@ -116,10 +116,11 @@ export async function registerAccount(input: { username: string; email: string; 
 }
 
 export async function loginAccount(usernameInput: string, password: string) {
+  const normalized = normalizeUsername(usernameInput);
   const result = await getDatabasePool().query<AccountRow & { password_hash: string }>(
     `select id, username, email, display_name, experience, goals, height_cm, bio, avatar_image, avatar_mime_type, profile_data, password_hash
-       from public.arcus_accounts where username_normalized = $1`,
-    [normalizeUsername(usernameInput)],
+       from public.arcus_accounts where username_normalized = $1 or email_normalized = $1`,
+    [normalized],
   );
   const row = result.rows[0];
   if (!row || !(await verifyPassword(password, row.password_hash))) throw new Error("Incorrect username or password.");
