@@ -32,7 +32,7 @@ export function TodayOverview({ workouts, active, ready = true }: TodayOverviewP
 
   const enrolled = user?.profile.activeProgram;
   const program = programs.find((saved) => saved.id === enrolled?.programId);
-  const schedule = program && enrolled ? programSchedule(program, enrolled) : null;
+  const schedule = program && enrolled ? programSchedule(program, enrolled, new Date(), workouts) : null;
   const loaded = clientReady && ready && profileReady && (!enrolled || programsReady);
   const now = new Date();
   const stats = consistency(workouts, now, preferences.weekStart);
@@ -78,7 +78,7 @@ export function TodayOverview({ workouts, active, ready = true }: TodayOverviewP
       {schedule.day ? <>
         <p className={styles.programDay}>{schedule.day.name}<span>{schedule.day.exercises.length} exercises{schedule.deload ? " · Deload week" : ""}</span></p>
         <Link className={styles.programAction} href={active ? "/workout" : `/workout?program=${encodeURIComponent(program.id)}&day=${encodeURIComponent(schedule.day.id)}`}>{active ? "Resume workout" : "Start today’s workout"}<ArrowRight size={18} aria-hidden="true" /></Link>
-      </> : <p className={styles.programMessage}>{schedule.finished ? "Program complete. Choose your next plan." : schedule.started ? "Recovery day. Your next session is ready in Programs." : `Your program starts on ${enrolled?.startDate}.`}</p>}
+      </> : <p className={styles.programMessage}>{schedule.finished ? "Program complete. Choose your next plan." : schedule.mode === "rotation" ? `Next session available ${schedule.nextWorkoutDate ? `on ${schedule.nextWorkoutDate}` : "when you’re ready"}.` : schedule.started ? "Recovery day. Your next session is ready in Programs." : `Your program starts on ${enrolled?.startDate}.`}</p>}
       <Link className={styles.textLink} href={`/programs/${encodeURIComponent(program.id)}`}>View schedule <ArrowRight size={16} aria-hidden="true" /></Link>
     </section>}
 

@@ -64,7 +64,7 @@ export type WorkoutRecord = {
   restUntil: string | null;
   syncStatus?: "pending" | "synced" | "error";
   updatedAt: string;
-  importSource?: "hevy" | "generic";
+  importSource?: "hevy" | "generic" | "apple-health";
   importBatchId?: string;
   sourceFingerprint?: string;
 };

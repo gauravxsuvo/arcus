@@ -27,20 +27,17 @@ button[data-motion-press]:active { scale:1; opacity:1; }
 @keyframes set-check-in { from { transform:scale(.65); opacity:.4; } to { transform:scale(1); opacity:1; } }
 @keyframes menu-open { from { transform:translateY(-4px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 :where(button, a, summary, input, select, textarea):focus-visible { outline:2px solid #73aaff; outline-offset:3px; }
+/* Preserve keyboard focus even when a form's custom select style resets outlines. */
+select:focus-visible, [role="tabpanel"]:focus-visible { outline:2px solid var(--accent) !important; outline-offset:3px; }
+.week-tabs { display:flex; align-items:center; gap:6px; }
 .saving-spinner { flex-shrink:0; animation:save-spin .9s linear infinite; }
 @keyframes save-spin { to { transform:rotate(360deg); } }
 .workout-editor-save { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
-.profile-preferences { margin-top:32px; padding-top:20px; border-top:1px solid var(--feature-border); color:var(--feature-muted); font-size:12px; }
-.profile-preferences>div { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:22px; }
-.profile-preferences .nav-theme-toggle { width:auto; min-height:44px; margin:0; padding:0 14px; color:var(--feature-text); font-size:13px; }
-.not-found-shell { width:min(760px,100%); min-height:100dvh; margin:auto; padding:48px 24px calc(var(--mobile-nav-height) + 40px); }
-.not-found-shell>.brand { min-height:44px; margin-bottom:80px; }
-.not-found-shell h1 { font-size:clamp(38px,7vw,66px); letter-spacing:-.055em; line-height:1.08; }
-.not-found-shell>p:not(.eyebrow) { margin-block:24px 32px; color:var(--feature-muted); line-height:1.65; }
-.not-found-shell>div { display:flex; flex-wrap:wrap; gap:12px; }
-.not-found-shell>div>a { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:48px; }
-
-@media(max-width:760px) {
+.profile-preferences { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-top:32px; padding-top:20px; border-top:1px solid var(--feature-border); color:var(--feature-muted); font-size:12px; }
+.profile-preferences nav { display:flex; align-items:center; gap:8px; }
+.profile-preferences nav a { display:inline-flex; align-items:center; min-height:44px; padding:0 10px; border-radius:8px; color:var(--feature-muted); text-decoration:none; }
+.profile-preferences nav a:hover { color:var(--feature-text); background:var(--feature-card); }
+@media(max-width:768px) {
   /* Minimum hit areas apply to controls, including icon-only actions. */
   button, [role="button"], summary { min-width:44px !important; min-height:44px !important; }
   a { display:inline-flex; align-items:center; min-width:44px; min-height:44px; }
@@ -53,7 +50,7 @@ button[data-motion-press]:active { scale:1; opacity:1; }
   .workout-edit-columns,.workout-edit-set-row { grid-template-columns:30px minmax(0,1fr) minmax(48px,.85fr) minmax(50px,.85fr) 44px; }
   .workout-set-options>div { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
   .workout-set-options>div>button { justify-self:end; }
-  .not-found-shell>.brand { margin-bottom:60px; }
+  body:has(.mobile-navigation) main { padding-bottom:max(48px,calc(var(--mobile-nav-height) + 16px)); }
 }
 
 @media(prefers-reduced-motion:reduce) {

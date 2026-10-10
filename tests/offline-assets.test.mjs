@@ -114,3 +114,11 @@ test("normal image assets retain their cache-first behavior", async () => {
   ]));
   assert.equal(await (await worker.request(path, "image")).text(), "cached logo");
 });
+
+test("passkey endpoints bypass the offline cache", async () => {
+  let requests = 0;
+  const worker = runWorker(async () => { requests++; return new Response("network"); });
+  assert.equal(await worker.request("/api/auth/passkeys"), undefined);
+  assert.equal(await worker.request("/api/auth/passkeys/register/options?_rsc=private"), undefined);
+  assert.equal(requests, 0);
+});

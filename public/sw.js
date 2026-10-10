@@ -1,4 +1,4 @@
-const CACHE_NAME = "arcus-shell-v12";
+const CACHE_NAME = "arcus-shell-v14";
 const APP_ROUTES = ["/", "/welcome", "/login", "/signup", "/dashboard", "/workout", "/history", "/exercises", "/programs", "/progress", "/profile", "/profile/data", "/profile/edit", "/recaps", "/exercises/barbell-bench-press", "/history/offline", "/programs/offline", "/workout/complete/offline", "/sounds/timer-done.wav", "/demos/placeholder.svg", "/manifest.webmanifest", "/icon.svg", "/arcus-mark.svg", "/arcus-moon-logo.png", "/icons/brand-64.png", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/maskable-512.png", "/icons/apple-touch-icon.png", "/offline.html"];
 
 self.addEventListener("install", (event) => {
@@ -34,11 +34,19 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
+  // Owner pages and their RSC payloads always require a fresh authenticated
+  // server request. Never keep administrative snapshots in the offline shell.
+  if (url.pathname === "/admin" || url.pathname.startsWith("/admin/") || url.pathname.startsWith("/api/admin/")) return;
+  if (url.pathname === "/api/runtime-flags") return;
+
+  // Passkey challenges and credential management are always server-only.
+  if (url.pathname === "/api/auth/passkeys" || url.pathname.startsWith("/api/auth/passkeys/")) return;
+
   if (request.mode === "navigate") {
     event.respondWith((async () => {
       try {
         const response = await fetch(request);
-        if (response.ok) {
+        if (response.ok && !response.headers.get("cache-control")?.includes("no-store")) {
           const cache = await caches.open(CACHE_NAME);
           await cache.put(url.pathname, response.clone());
         }
@@ -58,7 +66,7 @@ self.addEventListener("fetch", (event) => {
       const cache = await caches.open(CACHE_NAME);
       try {
         const response = await fetch(request);
-        if (response.ok) await cache.put(request, response.clone());
+        if (response.ok && !response.headers.get("cache-control")?.includes("no-store")) await cache.put(request, response.clone());
         return response;
       } catch {
         return (await cache.match(request)) || new Response("This page has not been opened while online yet.", { status: 503 });

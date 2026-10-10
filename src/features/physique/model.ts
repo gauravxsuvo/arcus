@@ -9,6 +9,8 @@ export type PhysiqueEntry = {
   syncStatus?: "pending" | "synced" | "error";
   deleted?: boolean;
   updatedAt?: string;
+  importBatchId?: string;
+  sourceFingerprint?: string;
 };
 
 export const MEASUREMENT_SITES = ["Waist", "Chest", "Hips", "Left arm", "Right arm", "Left thigh", "Right thigh", "Neck"] as const;

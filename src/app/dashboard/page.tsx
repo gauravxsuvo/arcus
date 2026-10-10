@@ -12,7 +12,7 @@ import { QuickStart } from "@/components/dashboard/quick-start";
 import { Avatar } from "@/components/shared/avatar";
 import { ArcusMark } from "@/components/shared/arcus-mark";
 import { useProfile } from "@/components/shared/user-profile-provider";
-import { weekStartDate, formatWeight, detectRecords, toDisplayWeight, weightUnit } from "@/features/training/logic";
+import { weekStartDate, detectRecords, toDisplayWeight, weightUnit } from "@/features/training/logic";
 import styles from "./dashboard.module.css";
 
 export default function DashboardPage() {
@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
   return <main className={`social-shell home-shell ${styles.page}`}>
     <header className={styles.header}>
-      <div><Link href="/welcome" className={styles.brand}><ArcusMark size={23}/><span>ARCUS TRAINING</span></Link><h1>Home</h1><p suppressHydrationWarning>{now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p></div>
+      <div><Link href="/home" className={styles.brand}><ArcusMark size={23}/><span>ARCUS TRAINING</span></Link><h1>Your training</h1><p suppressHydrationWarning>{now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p></div>
       <div className={styles.headerActions}><Link className={styles.search} href="/exercises" aria-label="Search exercises"><Search size={21}/></Link><Link className={styles.avatar} href="/profile" aria-label="Open your profile"><Avatar size={44}/></Link></div>
     </header>
     <AccountAccess className={styles.account} description="Keep your progress backed up."/>
@@ -72,11 +72,11 @@ export default function DashboardPage() {
       {!active && <Link className={styles.heroSecondary} href="/programs">Want a plan? Explore programs <ChevronRight size={14}/></Link>}
     </section>
     <section className={styles.weekSummary} aria-label="This week’s training summary">
-      <div className={styles.sectionLabel}><h2>This week</h2><Link href="/progress">View progress <ArrowRight size={14}/></Link></div>
+      <div className={styles.sectionLabel}><h2 id="home-week-heading">This week</h2><Link href="/progress">View progress <ArrowRight size={14}/></Link></div>
       <div className={styles.metrics}>
-        <Link href="/history" className={styles.metric} aria-label={dataReady ? `${thisWeek.length} sessions this week` : "Weekly sessions unavailable"}><span className={styles.metricIcon}><Dumbbell size={17}/></span><strong>{dataReady ? thisWeek.length : "—"}</strong><span>Sessions</span></Link>
-        <Link href="/progress" className={styles.metric} aria-label={dataReady ? `Weekly volume: ${formatWeight(weeklyVolume, preferences.units)}` : "Weekly volume unavailable"}><span className={styles.metricIcon}><BarChart3 size={17}/></span><strong>{dataReady ? volumeLabel : "—"}<small>{weightUnit(preferences.units)}</small></strong><span>Volume</span></Link>
-        <Link href="/progress" className={styles.metric} aria-label={dataReady ? `${weeklyRecords} personal records this week` : "Weekly personal records unavailable"}><span className={`${styles.metricIcon} ${styles.gold}`}><Award size={17}/></span><strong>{dataReady ? weeklyRecords : "—"}</strong><span>Records</span></Link>
+        <Link href="/history" className={styles.metric} aria-describedby="home-week-heading"><span className={styles.metricIcon}><Dumbbell size={17} aria-hidden="true"/></span><strong>{dataReady ? thisWeek.length : "—"}</strong>{" "}<span>Sessions</span></Link>
+        <Link href="/progress" className={styles.metric} aria-describedby="home-week-heading"><span className={styles.metricIcon}><BarChart3 size={17} aria-hidden="true"/></span><strong>{dataReady ? volumeLabel : "—"}{" "}<small>{weightUnit(preferences.units)}</small></strong>{" "}<span>Volume</span></Link>
+        <Link href="/progress" className={styles.metric} aria-describedby="home-week-heading"><span className={`${styles.metricIcon} ${styles.gold}`}><Award size={17} aria-hidden="true"/></span><strong>{dataReady ? weeklyRecords : "—"}</strong>{" "}<span>Records</span></Link>
       </div>
     </section>
     <div className={styles.middle}>{!error && <TodayOverview workouts={history} active={Boolean(active)} ready={dataReady}/>}<QuickStart active={active} lastCompleted={history[0] ?? null} ready={dataReady}/></div>

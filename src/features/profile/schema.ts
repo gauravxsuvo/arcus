@@ -7,5 +7,5 @@ export const profileDetailsSchema = z.object({
   bodyMetricsHistory:z.array(z.object({id, date, weight:z.number().min(20).max(500),bodyFat:z.number().min(0).max(60).nullable()})).max(1500).optional(),
   dateOfBirth:date.refine((v) => v <= new Date().toISOString().slice(0,10),"Date of birth cannot be in the future.").nullable().optional(),
   targetGoals:z.array(z.object({id,type:z.enum(["bodyweight","lift"]),exerciseId:id.optional(),targetValue:z.number().positive().max(2000),targetReps:z.number().int().min(1).max(100).optional(),targetDate:date,createdAt:z.string().datetime(),startValue:z.number().nonnegative().optional()}).refine((g) => g.type !== "lift" || Boolean(g.exerciseId),"Select an exercise for a lift goal.")).max(30).optional(),
-  activeProgram:z.object({programId:id,startDate:date,trainingMaxes:z.record(z.string().max(100),z.number().positive().max(2000)).optional()}).nullable().optional(),
+  activeProgram:z.object({programId:id,startDate:date,trainingMaxes:z.record(z.string().max(100),z.number().positive().max(2000)).optional(),scheduleMode:z.enum(["calendar","rotation"]).optional(),nextDayId:id.optional(),nextWorkoutDate:date.optional()}).nullable().optional(),
 });

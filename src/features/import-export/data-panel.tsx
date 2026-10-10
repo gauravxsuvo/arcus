@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, Download, FileUp, History, ShieldCheck, Trash2, Upload } from "lucide-react";
 import Link from "next/link";
 import { exerciseCatalog } from "@/features/exercises/catalog";
-import { deleteImportBatch, listCustomExercises, listImportBatches, saveImportBatch, type ImportBatch } from "@/features/local-data/repository";
+import { deleteImportBatch, deletePhysiqueEntriesByImportBatch, listCustomExercises, listImportBatches, saveImportBatch, type ImportBatch } from "@/features/local-data/repository";
 import { buildFullBackup, buildGenericWorkoutCsv, buildWorkoutCsv } from "./backup";
 import { downloadText, serializeCsv } from "./csv";
 import { buildImportedWorkouts } from "./importer";
@@ -13,6 +13,7 @@ import type { ExerciseMatch, HevyAnalysis } from "./hevy/types";
 import { deleteWorkoutsByImportBatch, getCompletedWorkouts, saveWorkouts } from "@/features/workouts/repository";
 import { BackupRestore } from "@/components/profile/backup-restore";
 import { HealthIntegrations } from "@/components/profile/health-integrations";
+import { AppleHealthImportPanel } from "./apple-health-panel";
 
 type Phase = "idle" | "review" | "importing" | "complete";
 
@@ -29,7 +30,12 @@ export function DataPanel() {
   const [message, setMessage] = useState("");
   const [progress, setProgress] = useState(0);
 
-  useEffect(() => { void listImportBatches().then(setBatches).catch(() => undefined); }, []);
+  useEffect(() => {
+    const refresh = () => { void listImportBatches().then(setBatches).catch(() => undefined); };
+    refresh();
+    window.addEventListener("arcus-import-history-updated", refresh);
+    return () => window.removeEventListener("arcus-import-history-updated", refresh);
+  }, []);
 
   const unresolved = useMemo(() => (analysis?.matches ?? []).filter((match) => match.status !== "matched"), [analysis]);
   const duplicate = Boolean(analysis && batches.some((batch) => batch.fileHash === analysis.fileHash));
@@ -66,7 +72,7 @@ export function DataPanel() {
 
   async function undo(batch: ImportBatch) {
     if (!window.confirm(`Undo ${batch.workoutCount} imported workouts from ${batch.filename}?`)) return;
-    await deleteWorkoutsByImportBatch(batch.id); await deleteImportBatch(batch.id); setBatches((current) => current.filter((item) => item.id !== batch.id)); setMessage("That import batch was removed from this device.");
+    await deleteWorkoutsByImportBatch(batch.id); await deletePhysiqueEntriesByImportBatch(batch.id); await deleteImportBatch(batch.id); setBatches((current) => current.filter((item) => item.id !== batch.id)); setMessage("That import batch was removed from this device.");
   }
 
   async function exportHevy() { downloadText(`hevy-export-${today()}.csv`, await buildWorkoutCsv(), "text/csv;charset=utf-8"); }
@@ -85,7 +91,7 @@ export function DataPanel() {
       {phase === "complete" && <div className="import-complete"><Check size={22}/><strong>Your history is ready.</strong><p>{message}</p><button className="outline-button" onClick={() => { setPhase("idle"); setAnalysis(null); }}>Import another file</button></div>}
       {message && phase !== "complete" && <p className="data-message" role="status">{message}</p>}
     </section>
-    <BackupRestore/><HealthIntegrations/><section className="data-panel"><div className="data-panel-heading"><div><p className="eyebrow">EXPORT YOUR DATA</p><h2>Take it with you</h2><p>Exports are created from this device and never include passwords, tokens, or server secrets.</p></div><Download className="data-panel-icon" size={24}/></div><div className="data-export-grid"><button className="outline-button" onClick={() => void exportHevy()}><Download size={15}/> Export for HEVY</button><button className="outline-button" onClick={() => void exportGeneric()}><Download size={15}/> Export workouts CSV</button><button className="outline-button" onClick={() => void exportBackup()}><Download size={15}/> Export all data JSON</button></div></section>
-    <section className="data-panel"><div className="data-panel-heading"><div><p className="eyebrow">IMPORT HISTORY</p><h2>Recent batches</h2></div><History className="data-panel-icon" size={24}/></div>{batches.length === 0 ? <p className="data-caption">No imports yet.</p> : <div className="import-history">{batches.map((batch) => <div className="import-history-row" key={batch.id}><div><strong>{batch.source.toUpperCase()} · {batch.filename}</strong><small>{new Date(batch.importedAt).toLocaleString()} · {batch.workoutCount} workouts · {batch.setCount} sets</small></div><button className="icon-button" aria-label={`Undo import ${batch.filename}`} onClick={() => void undo(batch)}><Trash2 size={15}/></button></div>)}</div>}</section>
+    <AppleHealthImportPanel/><BackupRestore/><HealthIntegrations/><section className="data-panel"><div className="data-panel-heading"><div><p className="eyebrow">EXPORT YOUR DATA</p><h2>Take it with you</h2><p>Exports are created from this device and never include passwords, tokens, or server secrets.</p></div><Download className="data-panel-icon" size={24}/></div><div className="data-export-grid"><button className="outline-button" onClick={() => void exportHevy()}><Download size={15}/> Export for HEVY</button><button className="outline-button" onClick={() => void exportGeneric()}><Download size={15}/> Export workouts CSV</button><button className="outline-button" onClick={() => void exportBackup()}><Download size={15}/> Export all data JSON</button></div></section>
+    <section className="data-panel"><div className="data-panel-heading"><div><p className="eyebrow">IMPORT HISTORY</p><h2>Recent batches</h2></div><History className="data-panel-icon" size={24}/></div>{batches.length === 0 ? <p className="data-caption">No imports yet.</p> : <div className="import-history">{batches.map((batch) => <div className="import-history-row" key={batch.id}><div><strong>{batch.source.toUpperCase()} · {batch.filename}</strong><small>{new Date(batch.importedAt).toLocaleString()} · {batch.workoutCount} workouts · {batch.setCount} sets{batch.metricCount ? ` · ${batch.metricCount} measurements` : ""}</small></div><button className="icon-button" aria-label={`Undo import ${batch.filename}`} onClick={() => void undo(batch)}><Trash2 size={15}/></button></div>)}</div>}</section>
   </main>;
 }

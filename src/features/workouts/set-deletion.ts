@@ -2,9 +2,15 @@ import type { LoggedSet, WorkoutExercise } from "./model.ts";
 
 export const SWIPE_DELETE_DISTANCE = 75;
 export const SWIPE_DELETE_LIMIT = 100;
+export const SWIPE_DUPLICATE_DISTANCE = 75;
+export const SWIPE_DUPLICATE_LIMIT = 100;
 
 export function shouldDeleteSwipedSet(x: number) {
   return Number.isFinite(x) && x <= -SWIPE_DELETE_DISTANCE;
+}
+
+export function shouldDuplicateSwipedSet(x: number) {
+  return Number.isFinite(x) && x >= SWIPE_DUPLICATE_DISTANCE;
 }
 
 export type RemovedSet = { set: LoggedSet; index: number; beforeId?: string; afterId?: string };

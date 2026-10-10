@@ -6,7 +6,14 @@ export type ProfilePreferences = {
 export const DEFAULT_PREFERENCES: ProfilePreferences = { units: "metric", defaultRestTimer: 90, theme: "dark", weekStart: "monday", effortSystem: "rpe" };
 export type BodyMetric = { id: string; date: string; weight: number; bodyFat: number | null };
 export type TrainingGoal = { id: string; type: "bodyweight" | "lift"; exerciseId?: string; targetValue: number; targetReps?: number; targetDate: string; createdAt: string; startValue?: number };
-export type ActiveProgram = { programId: string; startDate: string; trainingMaxes?: Record<string,number> };
+export type ActiveProgram = {
+  programId: string;
+  startDate: string;
+  trainingMaxes?: Record<string,number>;
+  scheduleMode?: "calendar" | "rotation";
+  nextDayId?: string;
+  nextWorkoutDate?: string;
+};
 export type ProfileDetails = {
   preferences?: ProfilePreferences; bodyMetrics?: { weight: number | null; bodyFat: number | null };
   bodyMetricsHistory?: BodyMetric[]; dateOfBirth?: string | null; targetGoals?: TrainingGoal[];

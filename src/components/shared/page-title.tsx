@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 const titles: Record<string, string> = {
-  dashboard: "Home", welcome: "Welcome", workout: "Workout", history: "History",
+  home: "Home", dashboard: "Training dashboard", pro: "ARCUS Pro", welcome: "Welcome", workout: "Workout", history: "History",
   exercises: "Exercises", programs: "Programs", progress: "Progress", profile: "Profile",
   recaps: "Weekly recaps", login: "Sign in", signup: "Sign up", onboarding: "Your training profile",
 };

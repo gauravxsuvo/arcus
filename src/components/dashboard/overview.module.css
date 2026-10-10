@@ -9,7 +9,7 @@
 .weekDay { display: grid; justify-items: center; gap: 9px; min-width: 0; color: var(--feature-muted); font-size: 11px; }
 .dayMark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid transparent; border-radius: 50%; background: var(--control); color: var(--feature-muted); font-size: 12px; font-weight: 600; }
 .today .dayMark { border-color: #70a7ff; color: #70a7ff; }
-.trainedDay .dayMark { border-color: #3b82f6; background: #3b82f6; color: white; }
+.trainedDay .dayMark { border-color: #2563eb; background: #2563eb; color: white; }
 .today > span:first-child { color: var(--feature-text); font-weight: 700; }
 .loadingMark { color: transparent; opacity: .55; }
 .weekFooter { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 15px; border-top: 1px solid var(--feature-border); }

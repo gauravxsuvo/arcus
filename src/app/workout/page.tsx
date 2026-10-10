@@ -60,7 +60,7 @@ function adjustNumber(value: number | null, delta: number, minimum = 0) {
 export default function WorkoutPage() {
   const { showToast } = useToast();
   const {workout,setWorkout}=useWorkout();
-  const {preferences:profilePreferences}=useProfile();
+  const {preferences:profilePreferences,user:profileUser,save:saveProfile}=useProfile();
   const units=profilePreferences.units;
   const [exerciseSettings,setExerciseSettings]=useState<ExerciseSettings[]>([]);
   const audioRef=useRef<HTMLAudioElement|null>(null);
@@ -124,7 +124,7 @@ export default function WorkoutPage() {
           current ??= createWorkout();
           if (!saved) current = { ...current, name: `${program.name} · ${programDay.name}` };
           const enrollment=user?.profile.activeProgram?.programId===program.id?user.profile.activeProgram:null;
-          const schedule=enrollment?programSchedule(program,enrollment):null;
+          const schedule=enrollment?programSchedule(program,enrollment,new Date(),completed):null;
           const planned = programDay.exercises.map((exercise) => {
             const setting=settings.find(s=>s.id===exercise.exerciseId);
             const previous=completed.flatMap(w=>w.exercises.filter(e=>e.exerciseId===exercise.exerciseId));
@@ -368,7 +368,7 @@ export default function WorkoutPage() {
       filledNext = result.filledId !== null;
       return result.exercise;
     });
-    vibrate(25);
+    vibrate(40);
     const shouldRest=groupRoundComplete(exercises,exercise.id,set.id)&&exercise.restSeconds>0;
     const draft={...workout,exercises,completedAt:timestamp,status:"completed" as const};
     const records=detectRecords([...history,draft]).filter(r=>r.workoutId===workout.id&&r.exerciseId===exercise.exerciseId);
@@ -401,12 +401,22 @@ export default function WorkoutPage() {
       // Keep the persisted pending revision for background sync. A failed request
       // must never write this snapshot over edits made later in History.
       void syncCompletedWorkout(finished).catch(() => undefined);
+      if (finished.programId && profileUser?.profile.activeProgram?.programId === finished.programId) {
+        const activeProgram = { ...profileUser.profile.activeProgram };
+        delete activeProgram.nextDayId;
+        delete activeProgram.nextWorkoutDate;
+        void saveProfile({ ...profileUser.profile, activeProgram }).catch(() => undefined);
+      }
       setCompletedWorkout(finished);
       setWorkout(null);
       setRestEnd(null);
       setMessage("");
       setSaveState("saved");
       showToast("Workout saved. Good work!");
+      vibrate([40, 60, 40]);
+      void import("canvas-confetti").then(({ default: confetti }) => {
+        confetti({ particleCount: 80, spread: 65, origin: { y: 0.65 }, disableForReducedMotion: true });
+      }).catch(() => undefined);
     } catch {
       setSaveState("error");
       setMessage("Could not finish saving. Your active session is still here. Keep this tab open and try again.");
@@ -497,7 +507,7 @@ export default function WorkoutPage() {
         <header className="exercise-card-head"><div className="exercise-title"><span className="exercise-order">{String(exerciseIndex + 1).padStart(2, "0")}</span><div><h3>{exercise.name}</h3><p>{exercise.muscle} <span>·</span> {exercise.equipment}{exercise.targetRepMin && exercise.targetRepMax ? <span> · {exercise.targetRepMin}–{exercise.targetRepMax} reps</span> : null}{exercise.targetRpe!=null?<span> · target RPE {exercise.targetRpe}</span>:null}</p></div></div><div className="exercise-actions"><button className="icon-button" aria-label={`Move ${exercise.name} up`} disabled={exerciseIndex === 0} onClick={() => moveExercise(exercise.id, -1)}><ArrowUp size={15}/></button><button className="icon-button" aria-label={`Move ${exercise.name} down`} disabled={exerciseIndex === workout.exercises.length - 1} onClick={() => moveExercise(exercise.id, 1)}><ArrowDown size={15}/></button><button className="icon-button remove-button" aria-label={`Remove ${exercise.name}`} onClick={() => removeExercise(exercise.id)}><Trash2 size={16} /></button></div></header>
         <div className="last-time"><span>LAST TIME</span><span>{previousByExercise.get(exercise.exerciseId)?.sets.filter((set) => set.completed).map((set) => isCardioExercise(exercise) ? `${set.distanceKm ?? 0} km · ${formatTime(set.durationSeconds ?? 0)}` : `${set.weight===null?"BW":formatWeight(set.weight,units)} × ${set.reps??"—"}${set.rir!=null?` @ RIR ${set.rir}`:set.rpe!=null?` @ RPE ${set.rpe}`:""}`).join("  ·  ") || "No previous session recorded"}</span></div>
         {exercise.equipment.toLowerCase().includes("barbell") && <button type="button" className={styles.plateShortcut} aria-label={`Calculate plates for ${exercise.name}`} onClick={() => setPlateExercise({ name: exercise.name, weight: exercise.sets.find(set => !set.completed && set.setType !== "warmup" && (set.weight ?? 0) > 0)?.weight ?? lastWorkingMeasurements(exercise).weight ?? null })}><Dumbbell size={15}/> Load plates <ArrowRight size={14}/></button>}
-        <div className="set-table"><div className="set-table-head"><span>SET</span><span>{isCardioExercise(exercise) ? "KM" : weightUnit(units).toUpperCase()}</span><span>{isCardioExercise(exercise) ? "MIN" : "REPS"}</span><span>{profilePreferences.effortSystem.toUpperCase()}</span><span>DONE</span></div><SetRows>{exercise.sets.map((set, index) => <AnimatedSetRow className={`set-row ${set.completed ? "set-row-done" : ""} ${set.setType === "warmup" ? "set-row-warmup" : ""}`} key={set.id} deleteLabel={`Set ${index + 1} of ${exercise.name}`} onDelete={exercise.sets.length > 1 ? () => removeSet(exercise.id, set.id) : undefined}>
+        <div className="set-table"><div className="set-table-head"><span>SET</span><span>{isCardioExercise(exercise) ? "KM" : weightUnit(units).toUpperCase()}</span><span>{isCardioExercise(exercise) ? "MIN" : "REPS"}</span><span>{profilePreferences.effortSystem.toUpperCase()}</span><span>DONE</span></div><SetRows>{exercise.sets.map((set, index) => <AnimatedSetRow className={`set-row ${set.completed ? "set-row-done" : ""} ${set.setType === "warmup" ? "set-row-warmup" : ""}`} key={set.id} deleteLabel={`Set ${index + 1} of ${exercise.name}`} onDelete={exercise.sets.length > 1 ? () => removeSet(exercise.id, set.id) : undefined} onDuplicate={() => { duplicateSet(exercise.id, set); showToast(`Set ${index + 1} duplicated`); }}>
           <div className="set-index"><span className="set-index-label">Set </span>{set.setType === "warmup" ? "W" : index + 1}</div>
           <div className="number-stepper"><span className="stepper-label">{isCardioExercise(exercise) ? "Distance · km" : `Weight · ${weightUnit(units)}`}</span><button type="button" aria-label={`Decrease set ${index + 1} ${isCardioExercise(exercise) ? "distance" : "weight"}`} onClick={() => adjustSetValue(exercise.id, set.id, "weight", -2.5)}>−</button><NumericInput inputMode="decimal" min="0" max={isCardioExercise(exercise) ? 10000 : toDisplayWeight(2000, units)} step="0.5" placeholder={isCardioExercise(exercise) ? "—" : "BW"} aria-label={`Set ${index + 1} ${isCardioExercise(exercise) ? "distance in km" : "weight"}`} aria-describedby={[`previous-set-${set.id}`, setError?.id === set.id ? `set-error-${set.id}` : null].filter(Boolean).join(" ")} aria-invalid={setError?.id === set.id || undefined} value={isCardioExercise(exercise) ? set.distanceKm ?? "" : set.weight === null ? "" : Number(toDisplayWeight(set.weight,units).toFixed(2))} onChange={(event) => updateSet(exercise.id, set.id, isCardioExercise(exercise) ? { distanceKm: event.target.value === "" ? null : Number(event.target.value) } : { weight: event.target.value === "" ? null : fromDisplayWeight(Number(event.target.value),units) })} /><button type="button" aria-label={`Increase set ${index + 1} ${isCardioExercise(exercise) ? "distance" : "weight"}`} onClick={() => adjustSetValue(exercise.id, set.id, "weight", 2.5)}>+</button></div>
           <div className="number-stepper"><span className="stepper-label">{isCardioExercise(exercise) ? "Time · minutes" : "Reps"}</span><button type="button" aria-label={`Decrease set ${index + 1} ${isCardioExercise(exercise) ? "time" : "reps"}`} onClick={() => adjustSetValue(exercise.id, set.id, "reps", -1)}>−</button><NumericInput aria-label={`Set ${index + 1} ${isCardioExercise(exercise) ? "time in minutes" : "reps"}`} aria-describedby={[`previous-set-${set.id}`, setError?.id === set.id ? `set-error-${set.id}` : null].filter(Boolean).join(" ")} aria-invalid={setError?.id === set.id || undefined} inputMode={isCardioExercise(exercise) ? "decimal" : "numeric"} min="0" max={isCardioExercise(exercise) ? 1440 : 10000} step={isCardioExercise(exercise) ? .5 : 1} placeholder="—" value={isCardioExercise(exercise) ? set.durationSeconds == null ? "" : Number((set.durationSeconds / 60).toFixed(2)) : set.reps ?? ""} onChange={(event) => updateSet(exercise.id, set.id, isCardioExercise(exercise) ? { durationSeconds: event.target.value === "" ? null : Math.round(Number(event.target.value) * 60) } : { reps: event.target.value === "" ? null : Number(event.target.value) })} /><button type="button" aria-label={`Increase set ${index + 1} ${isCardioExercise(exercise) ? "time" : "reps"}`} onClick={() => adjustSetValue(exercise.id, set.id, "reps", 1)}>+</button></div>

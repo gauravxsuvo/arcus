@@ -242,6 +242,18 @@ The saved theme is applied before React mounts. An inline bootstrap creates and 
 - Use progressive disclosure for RPE/RIR, set actions, and advanced analytics.
 - Respect `prefers-reduced-motion`, keyboard focus, screen-reader labels, and non-color status cues.
 
+## Owner administration
+
+The `(admin)/admin` route group serves `/admin`, `/admin/users`, `/admin/exercises` and `/admin/settings` with a separate desktop sidebar and scoped Tailwind/CSS design. `ApplicationShell` excludes the consumer profile/workout providers, sync managers and bottom navigation on these routes. `AdminLink` and table transitions provide immediate indeterminate loading feedback; `loading.tsx` covers streamed route content.
+
+`lib/auth/admin.ts` validates the existing HTTP-only PostgreSQL session against the server-only `ARCUS_ADMIN_EMAIL` **and** `ARCUS_ADMIN_ACCOUNT_ID`. Both must match; missing configuration denies access. The ID pin is necessary because account signup does not verify email ownership. Run `npm run admin:configure -- owner@example.com` only after creating and confirming the owner account. It reads that existing account's ID, writes only those keys to ignored `.env.local`, and never grants a role or changes database records. Set both keys in the hosting environment too. Owner access cannot be granted through client profiles, public environment variables or signup metadata.
+
+The server layout checks access, and every page/data repository checks it again before reading global records because App Router layouts can persist across client navigation. React `cache` deduplicates the session lookup within a render only; it does not cache authorization across users. No Edge middleware or Supabase session is involved. The portal uses Node.js and the existing bounded Portways pool.
+
+Overview uses one aggregate query after authentication. Users and exercises use server-side search/filtering and 25-row pagination with bounded parameters and deterministic ordering. Exercise inventory distinguishes the shipped static catalog from synced account-owned custom definitions. Reporting uses UTC dates and Monday weeks; the workout metric counts completed synced sessions because active device-local drafts are not stored on the server. Admin views never return password hashes, session tokens, avatar blobs or full workout payloads.
+
+Admin routes are dynamic, private/no-store and excluded from indexing. The service worker bypasses admin documents, RSC requests and future admin APIs entirely. Management dropdowns provide real read-only details; edit/ban/delete actions are visibly disabled until an audited mutation backend, validation, CSRF protection and lifecycle rules are implemented. This batch needs no database migration.
+
 ## Verification gates
 
 Run these after each feature batch:

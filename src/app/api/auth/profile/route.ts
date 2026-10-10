@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentAccountFromRequest, isUniqueViolation, updateCurrentAccount } from "@/lib/auth/server";
+import { getCurrentAccountAvatarObjectKey, getCurrentAccountFromRequest, isUniqueViolation, updateCurrentAccount } from "@/lib/auth/server";
 import { parseAvatar, ProfileInputError, readProfileBody } from "@/lib/auth/avatar";
+import { deleteProfileAvatar, putProfileAvatar } from "@/lib/storage/portways-s3";
 import { profileDetailsSchema } from "@/features/profile/schema";
 
 export const runtime = "nodejs";
@@ -18,12 +19,27 @@ export async function PUT(request: Request) {
     const bio = typeof body.bio === "string" ? body.bio.trim().slice(0, 160) : null;
     const goals = Array.isArray(body.goals) ? body.goals.filter((item): item is string => typeof item === "string").slice(0, 20) : [];
     const height = body.height_cm === null || body.height_cm === undefined || body.height_cm === "" ? null : Number(body.height_cm);
-    const user = await updateCurrentAccount(account, { username, name: typeof body.name === "string" ? body.name : undefined, bio, experience: typeof body.experience === "string" ? body.experience : null, goals, height_cm: Number.isFinite(height) ? height : null, avatar, profileData: details?.success ? details.data : undefined });
+    const oldAvatarKey = avatar === undefined ? null : await getCurrentAccountAvatarObjectKey(account.id);
+    const avatarObjectKey = avatar === undefined ? undefined : avatar ? await putProfileAvatar(account.id, avatar) : null;
+    let user;
+    try {
+      user = await updateCurrentAccount(account, { username, name: typeof body.name === "string" ? body.name : undefined, bio, experience: typeof body.experience === "string" ? body.experience : null, goals, height_cm: Number.isFinite(height) ? height : null, avatarObjectKey, profileData: details?.success ? details.data : undefined });
+    } catch (error) {
+      if (avatarObjectKey) await deleteProfileAvatar(avatarObjectKey).catch(() => undefined);
+      throw error;
+    }
+    if (oldAvatarKey && oldAvatarKey !== avatarObjectKey && avatar !== undefined) {
+      await deleteProfileAvatar(oldAvatarKey).catch((error: unknown) => {
+        const value = typeof error === "object" && error !== null ? error as { name?: unknown; $metadata?: { httpStatusCode?: number } } : {};
+        console.warn("Old ARCUS profile photo cleanup failed", { name: typeof value.name === "string" ? value.name : "StorageError", status: value.$metadata?.httpStatusCode });
+      });
+    }
     return NextResponse.json({ user });
   } catch (error) {
     if (error instanceof ProfileInputError) return NextResponse.json({ error: error.message }, { status: error.status });
     if (isUniqueViolation(error)) return NextResponse.json({ error: "That username is already taken." }, { status: 409 });
-    console.error("Arcus profile update failed", error);
+    const value = typeof error === "object" && error !== null ? error as { name?: unknown; code?: unknown; $metadata?: { httpStatusCode?: number } } : {};
+    console.error("Arcus profile update failed", { name: typeof value.name === "string" ? value.name : "Error", code: typeof value.code === "string" ? value.code : undefined, status: value.$metadata?.httpStatusCode });
     return NextResponse.json({ error: "Could not save your profile." }, { status: 503 });
   }
 }

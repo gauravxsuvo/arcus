@@ -17,6 +17,7 @@ export default function EditProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<LocalUser | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatarDirty, setAvatarDirty] = useState(false);
   const [details,setDetails]=useState<UserProfile|null>(null);
   const [cropSource, setCropSource] = useState<string | null>(null);
   const cropObjectUrl = useRef<string | null>(null);
@@ -80,10 +81,13 @@ export default function EditProfilePage() {
       let savedToAccount = false;
       let cloudUnavailable = false;
       try {
-        const response = await fetch("/api/auth/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ username, name, bio, goals, experience: profile.experience, height_cm: profile.height_cm, avatarUrl: avatar, profileData }) });
+          const body: Record<string, unknown> = { username, name, bio, goals, experience: profile.experience, height_cm: profile.height_cm, profileData };
+          if (avatarDirty) body.avatarUrl = avatar;
+          const response = await fetch("/api/auth/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify(body) });
         if (response.ok) {
           const payload = await response.json() as { user: { username: string; name: string; profile: LocalUser["profile"] } };
-          await updateLocalUser({ ...updated, syncStatus:"synced", username: payload.user.username, name: payload.user.name, profile: { ...profile, ...payload.user.profile } });
+          await updateLocalUser({ ...updated, syncStatus:"synced", username: payload.user.username, name: payload.user.name, profile: { ...profile, ...payload.user.profile, avatarUrl: avatarDirty ? avatar : profile.avatarUrl } });
+          setAvatarDirty(false);
           savedToAccount = true;
         }
         else if (response.status === 401 || response.status === 503) cloudUnavailable = true;
@@ -107,12 +111,12 @@ export default function EditProfilePage() {
   const profile = user.profile;
 
   return <main className="auth-shell profile-edit-shell">
-    {cropSource && <AvatarCropper src={cropSource} onCancel={closeCropper} onApply={(cropped) => { setAvatar(cropped); closeCropper(); setError(""); }} onError={(message) => { setError(message); closeCropper(); }} />}
+    {cropSource && <AvatarCropper src={cropSource} onCancel={closeCropper} onApply={(cropped) => { setAvatar(cropped); setAvatarDirty(true); closeCropper(); setError(""); }} onError={(message) => { setError(message); closeCropper(); }} />}
     <header className="workout-top"><Link className="back-link" href="/profile"><ArrowLeft size={17}/> Back to profile</Link><span className="offline-badge">PROFILE EDITOR</span></header>
     <section className="profile-edit-card">
       <div className="profile-edit-heading"><div><p className="social-kicker"><span className="social-live-dot"/> PERSONALIZE YOUR SPACE</p><h1>Make it yours<span>.</span></h1><p>Update how your training profile appears to you and your friends.</p></div></div>
       <form className="profile-edit-form" onSubmit={(event) => void saveProfile(event)}>
-        <div className="profile-avatar-editor"><label className="profile-edit-avatar" aria-label="Choose profile photo">{avatar ? <Image src={avatar} alt="" width={120} height={120} sizes="120px" unoptimized/> : <span>{user.name.split(/\s+/).slice(0,2).map(s=>s.charAt(0).toUpperCase()).join("")}</span>}<input className="visually-hidden" type="file" accept="image/*" onChange={chooseAvatar}/></label><div><label className="upload-avatar-button"><ImagePlus size={16}/> Change photo<input type="file" accept="image/*" onChange={(event) => chooseAvatar(event)} /></label><button type="button" className="remove-avatar-button" onClick={() => setAvatar(null)} disabled={!avatar}>Remove photo</button><small>Crop your photo, then save it to your account</small></div></div>
+        <div className="profile-avatar-editor"><label className="profile-edit-avatar" aria-label="Choose profile photo">{avatar ? <Image src={avatar} alt="" width={120} height={120} sizes="120px" unoptimized/> : <span>{user.name.split(/\s+/).slice(0,2).map(s=>s.charAt(0).toUpperCase()).join("")}</span>}<input className="visually-hidden" type="file" accept="image/*" onChange={chooseAvatar}/></label><div><label className="upload-avatar-button"><ImagePlus size={16}/> Change photo<input type="file" accept="image/*" onChange={(event) => chooseAvatar(event)} /></label><button type="button" className="remove-avatar-button" onClick={() => { setAvatar(null); setAvatarDirty(true); }} disabled={!avatar}>Remove photo</button><small>Crop your photo, then save it to your account</small></div></div>
         {details && <ProfileFields profile={details} onChange={setDetails}/>}<div className="profile-form-section"><h2>Identity</h2><div className="profile-form-grid"><label>Username<input name="username" defaultValue={user.username} autoComplete="username" maxLength={32} required /></label><label>Display name<input name="name" defaultValue={user.name} autoComplete="name" maxLength={80} required /></label><label className="profile-form-wide">Bio<textarea name="bio" defaultValue={profile.bio ?? ""} maxLength={160} placeholder="What are you training for?" rows={3}></textarea><small>160 characters max</small></label></div></div>
         <div className="profile-form-section"><h2>About you</h2><div className="profile-form-grid"><label>Age<NumericInput name="age" min="13" max="110" defaultValue={profile.age ?? ""} inputMode="numeric" /></label><label>Sex<select name="sex" defaultValue={profile.sex ?? ""}><option value="">Prefer not to say</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></label></div><p className="profile-privacy-note">Age and sex stay on this device. Your photo, height, and experience sync to your account.</p></div>
         <div className="profile-form-section"><h2>Goals</h2><label className="profile-form-wide">Separate goals with commas<input name="goals" defaultValue={profile.goals.join(", ")} placeholder="Strength, muscle gain, consistency" /></label></div>

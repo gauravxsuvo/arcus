@@ -21,7 +21,7 @@ export type LocalUser = {
 
 export type ImportBatch = {
   id: string;
-  source: "hevy" | "generic";
+  source: "hevy" | "generic" | "apple-health";
   filename: string;
   fileHash: string;
   importedAt: string;
@@ -29,6 +29,7 @@ export type ImportBatch = {
   setCount: number;
   warningCount: number;
   skippedRows: number;
+  metricCount?: number;
   status: "completed" | "failed";
 };
 
@@ -200,6 +201,11 @@ export async function deletePhysiqueEntry(id: string) {
   const entries = await request<PhysiqueEntry[]>(STORES.measurements, "readonly", (store) => store.getAll());
   const entry = entries.find((entry) => entry.id === id);
   if (entry) await savePhysiqueEntry({ ...entry, deleted: true, syncStatus: "pending",updatedAt:new Date().toISOString() });
+}
+
+export async function deletePhysiqueEntriesByImportBatch(batchId: string) {
+  const entries = await request<PhysiqueEntry[]>(STORES.measurements, "readonly", (store) => store.getAll());
+  await Promise.all(entries.filter((entry) => entry.importBatchId === batchId && !entry.deleted).map((entry) => deletePhysiqueEntry(entry.id)));
 }
 
 export async function hardDeletePhysiqueEntry(id: string) {

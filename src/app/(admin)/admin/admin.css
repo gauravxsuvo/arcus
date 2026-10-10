@@ -1,0 +1,164 @@
+/* The owner console is deliberately isolated from the consumer app's theme. */
+.admin-portal {
+  --admin-canvas: #000000;
+  --admin-surface: #111114;
+  --admin-surface-raised: #191a1f;
+  --admin-border: #25262b;
+  --admin-ink: #f5f5f7;
+  --admin-muted: #92939a;
+  --admin-accent: #3b82f6;
+  --accent: var(--admin-accent);
+  --ink: var(--admin-ink);
+  --muted: var(--admin-muted);
+  --canvas: var(--admin-canvas);
+  --surface: var(--admin-surface);
+  --line: var(--admin-border);
+  color-scheme: dark;
+  color: var(--admin-ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+.admin-portal.admin-shell { min-height: 100dvh; background: var(--admin-canvas); isolation: isolate; }
+.admin-portal h1 { margin: 0; font-size: clamp(26px, 2.5vw, 32px); line-height: 1.25; font-weight: 700; letter-spacing: -.035em; }
+.admin-portal h1 span { color: inherit; }
+.admin-portal :where(button, input, select, textarea, summary) { font-family: inherit; }
+.admin-portal :where(button, a, summary) { transition: background-color .16s ease, border-color .16s ease, color .16s ease; }
+.admin-portal :where(button, a, summary):active { scale: 1; opacity: 1; filter: none; }
+.admin-portal :where(a, button, summary, input, select, textarea):focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 3px; }
+.admin-portal #admin-command-search:focus-visible { outline: none; outline-offset: 0; box-shadow: none; }
+.admin-portal button:disabled { cursor: not-allowed; }
+.admin-portal input, .admin-portal select, .admin-portal textarea { color-scheme: dark; }
+
+.admin-portal .admin-skip-link { position: fixed; z-index: 100; top: 12px; left: 12px; min-height: 44px; padding: 11px 16px; transform: translateY(-160%); border: 1px solid var(--admin-border); border-radius: 8px; background: #111114; color: var(--admin-ink); box-shadow: 0 4px 24px #0009; }
+.admin-portal .admin-skip-link:focus { transform: translateY(0); }
+.admin-portal .admin-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; width: 244px; min-height: 100dvh; padding: 31px 18px 22px; overflow-y: auto; border-right: 1px solid #202024; background: #09090b; color: #c4c4ca; }
+.admin-portal .admin-brand { min-height: 48px; padding: 0 12px; color: #f5f5f7; }
+.admin-portal .admin-brand-symbol { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border: 1px solid #282930; border-radius: 10px; background: #131419; color: #60a5fa; font-size: 23px; font-weight: 700; letter-spacing: -.06em; }
+.admin-portal .admin-brand .brand-mark { flex: 0 0 auto; overflow: visible; border-radius: 0; }
+.admin-portal .admin-brand-copy { display: flex; flex-direction: column; gap: 1px; }
+.admin-portal .admin-brand-wordmark { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: .12em; }
+.admin-portal .admin-brand-wordmark > span { color: #3b82f6; }
+.admin-portal .admin-brand-caption { color: #777982; font-size: 11px; letter-spacing: .025em; }
+.admin-portal .admin-nav-section { margin-top: 48px; }
+.admin-portal .admin-sidebar-label { display: block; margin: 0 14px 13px; color: #72747d; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.admin-portal .admin-sidebar-nav { display: flex; flex-direction: column; gap: 6px; }
+.admin-portal .admin-nav-link { position: relative; min-height: 46px; padding: 0 14px; border: 1px solid transparent; border-radius: 8px; color: #a1a1aa; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.admin-portal .admin-nav-link:hover { background: #151519; color: #f5f5f7; }
+.admin-portal .admin-nav-link[aria-current="page"] { border-color: #3b82f626; background: #151c2a; color: #7db0ff; }
+.admin-portal .admin-active-dot { width: 5px; height: 5px; margin-left: auto; flex-shrink: 0; border-radius: 50%; background: #3b82f6; }
+.admin-portal .admin-sidebar-footer { margin-top: auto; padding: 28px 10px 0; }
+.admin-portal .admin-return-link { min-height: 44px; padding: 0 4px; color: #a1a1aa; font-size: 12px; }
+.admin-portal .admin-return-link:hover { color: #f5f5f7; }
+.admin-portal .admin-sidebar-note { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 20px; border-top: 1px solid #242429; color: #74747e; font-size: 10px; }
+.admin-portal .admin-sidebar :where(a, button):focus-visible { outline-color: #60a5fa; }
+.admin-portal .admin-frame { padding-left: 244px; }
+.admin-portal .admin-topbar { position: sticky; z-index: 30; top: 0; min-height: 80px; padding: 15px 40px; border-bottom: 1px solid var(--admin-border); background: rgb(0 0 0 / 88%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transform: translate3d(0, 0, 0); }
+.admin-portal .admin-breadcrumb { font-size: 12px; }
+.admin-portal .admin-breadcrumb-parent, .admin-portal .admin-breadcrumb-separator { color: #777982; }
+.admin-portal .admin-breadcrumb-current { overflow: hidden; color: #dedee3; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.admin-portal .admin-header-spinner { color: var(--admin-accent); }
+.admin-portal .admin-account { min-width: 0; }
+.admin-portal .admin-account-copy { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.admin-portal .admin-account-name { max-width: 220px; overflow: hidden; color: #f0f0f2; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.admin-portal .admin-account-role { color: #777982; font-size: 10px; }
+.admin-portal .admin-account-avatar { display: grid; place-items: center; width: 35px; height: 35px; flex-shrink: 0; border: 1px solid #2a2b31; border-radius: 50%; background: #15161b; color: #75aaff; font-size: 11px; font-weight: 700; }
+.admin-portal .admin-content { max-width: 1540px; margin: 0 auto; padding: 36px 40px 48px; }
+.admin-portal .admin-content:focus { outline: none; }
+.admin-portal .admin-eyebrow { margin: 0 0 8px; color: var(--admin-accent); font-size: 10px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
+.admin-portal .admin-page-title { margin: 0; font-size: 36px; font-weight: 600; line-height: 1.25; letter-spacing: -.045em; }
+.admin-portal .admin-page-description { margin: 8px 0 0; color: var(--admin-muted); font-size: 13px; line-height: 1.65; }
+.admin-portal .admin-page-description + .admin-panel { margin-top: 32px; }
+.admin-portal .admin-panel { min-width: 0; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-surface); box-shadow: 0 10px 30px #0002; }
+.admin-portal .admin-button { font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
+.admin-portal .admin-button:disabled { cursor: not-allowed; }
+.admin-portal .admin-button-primary { border-color: var(--admin-accent); background: var(--admin-accent); color: #fff; }
+.admin-portal .admin-button-primary:hover { border-color: #2563eb; background: #2563eb; }
+.admin-portal .admin-badge { font-size: 11px; font-weight: 500; white-space: nowrap; }
+.admin-portal .admin-spinner { flex-shrink: 0; animation: admin-spin .85s linear infinite; }
+.admin-portal .admin-navigation-progress { position: absolute; inset: auto 0 -1px; height: 2px; overflow: hidden; background: #1c2433; }
+.admin-portal .admin-navigation-progress > span { display: block; width: 32%; height: 100%; background: var(--admin-accent); animation: admin-progress 1.2s ease-in-out infinite; }
+.admin-portal .admin-loading-state { min-height: 360px; color: var(--admin-accent); }
+.admin-portal .admin-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+@keyframes admin-progress { from { transform: translateX(-100%); } to { transform: translateX(410%); } }
+
+@media (max-width: 1100px) and (min-width: 761px) {
+  .admin-portal .admin-sidebar { width: 216px; padding-inline: 12px; }
+  .admin-portal .admin-frame { padding-left: 216px; }
+  .admin-portal .admin-topbar { padding-inline: 28px; }
+  .admin-portal .admin-content { padding: 30px 28px 40px; }
+}
+
+@media (max-width: 760px) {
+  .admin-portal .admin-sidebar { position: sticky; inset: auto; top: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; width: 100%; min-height: 0; padding: 14px 16px 10px; overflow: visible; border-right: 0; }
+  .admin-portal .admin-brand { min-height: 44px; padding: 0; gap: 10px; }
+  .admin-portal .admin-brand-symbol { width: 32px; height: 32px; font-size: 20px; }
+  .admin-portal .admin-brand-wordmark { font-size: 15px; }
+  .admin-portal .admin-brand-caption { font-size: 10px; }
+  .admin-portal .admin-nav-section { grid-column: 1 / -1; grid-row: 2; min-width: 0; margin: 0 -16px; }
+  .admin-portal .admin-sidebar-label { display: none; }
+  .admin-portal .admin-sidebar-nav { flex-direction: row; gap: 4px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #3b82f6 #09090b; }
+  .admin-portal .admin-nav-link { min-height: 44px; padding: 0 11px; gap: 8px; flex-shrink: 0; font-size: 12px; }
+  .admin-portal .admin-nav-link > svg { width: 17px; height: 17px; }
+  .admin-portal .admin-active-dot { display: none; }
+  .admin-portal .admin-sidebar-footer { grid-column: 2; grid-row: 1; align-self: center; margin: 0; padding: 0; }
+  .admin-portal .admin-return-link { gap: 6px; font-size: 11px; }
+  .admin-portal .admin-sidebar-note { display: none; }
+  .admin-portal .admin-frame { padding-left: 0; }
+  .admin-portal .admin-topbar { position: relative; min-height: 64px; padding: 12px 20px; }
+  .admin-portal .admin-breadcrumb-parent, .admin-portal .admin-breadcrumb-separator { display: none; }
+  .admin-portal .admin-breadcrumb-current { font-size: 12px; }
+  .admin-portal .admin-account-name { max-width: 140px; font-size: 11px; }
+  .admin-portal .admin-account-role { display: none; }
+  .admin-portal .admin-account-avatar { width: 30px; height: 30px; font-size: 10px; }
+  .admin-portal .admin-content { padding: 26px 20px 36px; }
+  .admin-portal .admin-page-title { font-size: 32px; }
+  .admin-portal .admin-button { min-height: 44px; }
+  .admin-portal .admin-loading-state { min-height: 280px; }
+}
+
+/* The console is fixed to the product's AMOLED palette. These scoped utility
+   remaps keep existing table, chart, form and dialog markup in that palette. */
+.admin-portal :is([class~="bg-white"], [class~="bg-white/85"], [class~="bg-slate-50"], [class~="bg-slate-50/70"], [class~="bg-slate-50/80"], [class~="bg-stone-50"], [class~="bg-[#fafbfd]"], [class~="bg-[#f3f7f9]"]) { background-color: var(--admin-surface) !important; }
+.admin-portal :is([class~="bg-slate-100"], [class~="bg-[#eef7f8]"], [class~="bg-[#e7f3f4]"]) { background-color: var(--admin-surface-raised) !important; }
+.admin-portal :is([class~="bg-teal-50"], [class~="bg-blue-50"]) { background-color: #17233a !important; }
+.admin-portal [class~="bg-emerald-50"] { background-color: #102019 !important; }
+.admin-portal [class~="bg-rose-50"] { background-color: #261419 !important; }
+.admin-portal :is([class~="bg-teal-700"], [class~="bg-[#087f8c]"]) { background-color: #3b82f6 !important; }
+.admin-portal [class~="bg-teal-800"] { background-color: #2563eb !important; }
+.admin-portal :is([class~="text-[#172638]"], [class~="text-slate-900"], [class~="text-stone-900"]) { color: var(--admin-ink) !important; }
+.admin-portal :is([class~="text-slate-800"], [class~="text-stone-800"]) { color: #e4e4e7 !important; }
+.admin-portal :is([class~="text-slate-700"], [class~="text-slate-600"], [class~="text-[#68788b]"]) { color: #c4c4ca !important; }
+.admin-portal :is([class~="text-slate-500"], [class~="text-stone-500"], [class~="text-slate-400"], [class~="text-stone-400"], [class~="text-[#8795a4]"]) { color: #92939a !important; }
+.admin-portal :is([class~="text-teal-700"], [class~="text-[#087f8c]"], [class~="text-blue-700"]) { color: #60a5fa !important; }
+.admin-portal [class~="text-teal-800"] { color: #93c5fd !important; }
+.admin-portal :is([class~="text-emerald-800"], [class~="text-emerald-900"]) { color: #86efac !important; }
+.admin-portal :is([class~="text-rose-700"], [class~="text-rose-800"], [class~="text-rose-900"]) { color: #fda4af !important; }
+.admin-portal :is([class~="border-slate-200"], [class~="border-slate-100"], [class~="border-stone-200"], [class~="border-blue-100"], [class~="border-teal-100"], [class~="border-teal-600"], [class~="border-[#e2e8ef]"], [class~="border-[#edf1f5]"], [class~="border-[#f0f3f6]"]) { border-color: var(--admin-border) !important; }
+.admin-portal :is([class~="border-rose-100"], [class~="border-rose-200"]) { border-color: #53212b !important; }
+.admin-portal [class~="border-emerald-100"] { border-color: #24432d !important; }
+.admin-portal :is([class~="divide-stone-100"], [class~="divide-[#edf1f5]"]) > :not(:last-child) { border-color: var(--admin-border) !important; }
+.admin-portal [class~="hover:bg-slate-50/70"]:hover,
+.admin-portal [class~="hover:bg-slate-50/80"]:hover,
+.admin-portal [class~="hover:bg-slate-50"]:hover,
+.admin-portal [class~="hover:bg-slate-100"]:hover { background-color: #191a1f !important; }
+.admin-portal [class~="hover:bg-teal-50"]:hover { background-color: #17233a !important; }
+.admin-portal [class~="hover:text-slate-700"]:hover,
+.admin-portal [class~="hover:text-[#087f8c]"]:hover { color: #75aaff !important; }
+.admin-portal :where(dialog, input, select, textarea) { color-scheme: dark; }
+.admin-portal dialog::backdrop { background: rgb(0 0 0 / 76%); backdrop-filter: blur(4px); }
+.admin-portal::backdrop { background: rgb(0 0 0 / 76%); backdrop-filter: blur(4px); }
+.admin-portal:is([class~="bg-white"], [class~="bg-white/85"], [class~="bg-slate-50"], [class~="bg-slate-50/70"], [class~="bg-slate-50/80"], [class~="bg-stone-50"]) { background-color: var(--admin-surface) !important; }
+.admin-portal:is([class~="text-slate-900"], [class~="text-slate-800"], [class~="text-slate-700"], [class~="text-stone-800"]) { color: var(--admin-ink) !important; }
+.admin-portal:is([class~="border-slate-200"], [class~="border-stone-200"]) { border-color: var(--admin-border) !important; }
+.admin-portal-overlay { background-color: #111114 !important; color: #f5f5f7 !important; border-color: #303036 !important; color-scheme: dark; }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-portal :where(button, a, summary) { transition: none; }
+  .admin-portal .admin-spinner { animation: none; }
+  .admin-portal .admin-navigation-progress > span { width: 100%; animation: none; opacity: .55; }
+}

@@ -167,6 +167,7 @@ export function AvatarCropper({ src, onCancel, onApply, onError }: AvatarCropper
           onPointerUp={stopDrag}
           onPointerCancel={stopDrag}
           onWheel={(event) => setZoom((value) => Math.max(1, Math.min(3, value + (event.deltaY < 0 ? 0.08 : -0.08))))}
+          role="group"
           aria-label="Photo crop area. Drag the image to adjust its position."
         >
           {imageLayout && dimensions ? <Image

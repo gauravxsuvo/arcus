@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { removeSetFromExercise, restoreRemovedSet, shouldDeleteSwipedSet } from "../src/features/workouts/set-deletion.ts";
+import { removeSetFromExercise, restoreRemovedSet, shouldDeleteSwipedSet, shouldDuplicateSwipedSet } from "../src/features/workouts/set-deletion.ts";
 
 const set = (id, index, values = {}) => ({ id, index, weight: 80, reps: 8, rpe: 8, completed: true, completedAt: "2026-10-08T10:00:00Z", setType: "working", ...values });
 const exercise = () => ({ id: "instance", exerciseId: "bench", name: "Bench", muscle: "Chest", equipment: "Barbell", restSeconds: 90, sets: [set("a", 0), set("b", 1), set("c", 2)] });
@@ -8,6 +8,11 @@ const exercise = () => ({ id: "instance", exerciseId: "bench", name: "Bench", mu
 test("only sufficient actual left displacement deletes; short/right/invalid swipes do not", () => {
   for (const x of [0, 50, -5, -74.99, NaN, Infinity, -Infinity]) assert.equal(shouldDeleteSwipedSet(x), false);
   for (const x of [-75, -85, -100]) assert.equal(shouldDeleteSwipedSet(x), true);
+});
+
+test("only sufficient actual right displacement duplicates; short/left/invalid swipes do not", () => {
+  for (const x of [0, -50, 5, 74.99, NaN, Infinity, -Infinity]) assert.equal(shouldDuplicateSwipedSet(x), false);
+  for (const x of [75, 85, 100]) assert.equal(shouldDuplicateSwipedSet(x), true);
 });
 
 test("removal keeps at least one set and ignores stale or unknown IDs", () => {

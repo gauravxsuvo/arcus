@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
-const tabs = new Set(["/dashboard", "/workout", "/history", "/profile"]);
+const tabs = new Set(["/home", "/dashboard", "/workout", "/history", "/profile"]);
 
 export function RouteTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

@@ -23,7 +23,7 @@ export function NumericInput({ value, defaultValue, onChange, onBlur, inputMode,
   }, [value, canonical]);
   useEffect(() => { ref.current?.setCustomValidity(error ?? ""); }, [error]);
 
-  return <input {...props} ref={ref} type="text" inputMode={integer ? "numeric" : "decimal"}
+  return <input {...props} ref={ref} type="text" inputMode="decimal"
     pattern={pattern ?? (integer ? "[0-9]*" : "[0-9]*[.,]?[0-9]*")}
     data-numeric={integer ? "integer" : "decimal"} value={display}
     aria-invalid={props["aria-invalid"] ?? (error ? true : undefined)}

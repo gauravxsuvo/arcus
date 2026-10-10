@@ -9,6 +9,16 @@ type SiteEnvironment = {
 export const SITE_TITLE = "ARCUS — Training, made measurable";
 export const SITE_DESCRIPTION = "A focused training log built for better sessions and clearer progress.";
 
+export function pageMetadata(title: string, description: string, indexable = false): Metadata {
+  return {
+    title,
+    description,
+    robots: { index: indexable, follow: indexable },
+    openGraph: { title, description, type: "website" },
+    twitter: { title, description, card: "summary_large_image" },
+  };
+}
+
 /** Use a configured public origin, never a temporary tunnel or request Host header. */
 export function siteOrigin(environment: SiteEnvironment): URL {
   const configured = environment.SITE_URL?.trim();

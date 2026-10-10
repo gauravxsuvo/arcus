@@ -1,0 +1,19 @@
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1400px;
+  margin: 36px auto 0;
+  padding: 20px clamp(18px, 4vw, 56px) max(20px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--feature-border);
+  color: var(--feature-muted);
+  font-size: 12px;
+}
+.footer nav { display: flex; align-items: center; gap: 18px; }
+.tagline { font: 9px/1.4 Consolas, monospace; letter-spacing: .12em; }
+.welcomeFooter { max-width: 1060px; font: 10px/1.5 Consolas, monospace; letter-spacing: .1em; }
+.footer a { color: var(--feature-muted); text-decoration: none; }
+.footer a:hover { color: var(--feature-text); }
+@media (max-width: 480px) { .footer { align-items: flex-start; flex-direction: column; gap: 8px; } }
+@media (max-width: 720px) { .welcomeFooter { font-size: 8px; } }

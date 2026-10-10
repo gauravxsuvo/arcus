@@ -3,3 +3,6 @@
 .delete { position:absolute; inset:0 0 0 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; width:100px; border-radius:10px; background:#b91c1c; color:#fff; font-size:13px; font-weight:600; }
 .delete[data-armed="true"] { background:#991b1b; }
 .delete>svg { width:24px; height:24px; }
+.duplicate { position:absolute; inset:0 auto 0 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; width:100px; border-radius:10px; background:#1d4ed8; color:#fff; font-size:13px; font-weight:600; }
+.duplicate[data-armed="true"] { background:#1e40af; }
+.duplicate>svg { width:24px; height:24px; }

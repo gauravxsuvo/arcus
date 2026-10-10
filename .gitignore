@@ -1,5 +1,6 @@
 node_modules/
 .next/
+.next-*/
 out/
 build/
 coverage/
@@ -11,3 +12,5 @@ coverage/
 variables.txt
 artifacts/
 .next-verify/
+.next-admin-final/
+.next-admin-amoled/
