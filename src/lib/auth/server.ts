@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { getDatabasePool } from "@/lib/db/pool";
 import { hashPassword, verifyPassword } from "./password";
 import type { ProfileDetails, UserProfile } from "@/features/profile/model";
@@ -98,11 +99,11 @@ async function accountFromToken(token: string | undefined): Promise<AccountView 
   return result.rows[0] ? toAccountView(result.rows[0]) : null;
 }
 
-export async function getCurrentAccount() {
+export const getCurrentAccount = cache(async function getCurrentAccount() {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   return accountFromToken(token);
-}
+});
 
 export async function getCurrentAccountFromRequest(request: Request) {
   const cookieHeader = request.headers.get("cookie") ?? "";

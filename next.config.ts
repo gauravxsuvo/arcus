@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/admin/:path*", headers: privateHeaders },
       { source: "/api/admin/:path*", headers: privateHeaders },
+      { source: "/home", headers: [{ key:"Cache-Control",value:"private, no-store, max-age=0" }] },
+      { source: "/api/social/:path*", headers: [{ key:"Cache-Control",value:"private, no-store, max-age=0" }] },
     ];
   },
 };

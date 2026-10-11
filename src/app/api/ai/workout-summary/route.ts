@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import type { WorkoutRecord } from "@/features/workouts/model";
+import { getCurrentAccountFromRequest } from "@/lib/auth/server";
+import { readProfileBody, ProfileInputError } from "@/lib/auth/avatar";
+import { workoutSchema } from "@/features/import-export/restore-schema";
+import { z } from "zod";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+const summarySchema = z.object({ workout:workoutSchema,history:z.array(workoutSchema).max(100) });
 
 export async function POST(request: Request) {
   try {
-    const { workout, history } = await request.json() as { workout: WorkoutRecord; history: WorkoutRecord[] };
+    const session = await getCurrentAccountFromRequest(request);
+    if (!session) return NextResponse.json({ error:"Unauthorized" },{ status:401 });
+    const parsed = summarySchema.safeParse(await readProfileBody(request));
+    if (!parsed.success) return NextResponse.json({ error:"Invalid workout summary data." },{ status:400 });
+    const { workout, history } = parsed.data as { workout: WorkoutRecord; history: WorkoutRecord[] };
 
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({
@@ -87,6 +96,7 @@ Return a JSON object exactly like this (no markdown block):
     return NextResponse.json(result);
 
   } catch (error) {
+    if (error instanceof ProfileInputError) return NextResponse.json({ error:error.message },{ status:error.status });
     console.error("AI Summary Error:", error);
     return NextResponse.json({ error: "Failed to generate AI summary." }, { status: 500 });
   }

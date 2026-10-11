@@ -14,8 +14,9 @@ import styles from "./profile.module.css";
 import { useProfile } from "@/components/shared/user-profile-provider";
 import { formatWeight,toDisplayWeight,weightUnit } from "@/features/training/logic";
 import { PasskeySettings } from "@/components/profile/passkey-settings";
+import { WorkoutActivitySummary } from "@/components/profile/WorkoutActivitySummary";
 
-type Profile = { display_name: string | null; experience: string | null; goals: string[]; height_cm: number | null; bio?: string | null; avatarUrl?: string | null; username: string };
+type Profile = { id: string; display_name: string | null; experience: string | null; goals: string[]; height_cm: number | null; bio?: string | null; avatarUrl?: string | null; username: string };
 type WeekProgress = { label: string; hours: number; volume: number; sessions: number; start: number };
 type ChartMetric = "duration" | "volume" | "sessions";
 type ProfileWarning = { id: string; message: string; actor_email: string; created_at: string };
@@ -74,7 +75,7 @@ export default function ProfilePage() {
     else if (saved === "device") setSaveNotice({ text: query.get("sync") === "unavailable" ? "Saved on this device. Your changes are queued for account sync." : "Saved on this device. Sign in to the live server to sync across devices.", local: true });
     void Promise.all([getLocalSession(), getCompletedWorkouts()]).then(([user, sessions]) => {
       if (cancelled) return;
-      if (user) setProfile({ display_name: user.name, username: user.username, ...user.profile });
+      if (user) setProfile({ id: user.id, display_name: user.name, username: user.username, ...user.profile });
       setWorkouts(sessions);
       setReady(true);
     }).catch((reason: unknown) => {
@@ -138,6 +139,8 @@ export default function ProfilePage() {
       </section>
 
       <GoalSummary workouts={workouts}/>
+
+      <WorkoutActivitySummary userId={profile?.id} workouts={workouts} units={units}/>
 
       <section className="profile-chart-card">
         <div className="profile-chart-heading"><div><p className="social-kicker">YOUR PROGRESS</p><h2>{chartValueLabel} <span>this week</span></h2></div><label className="range-picker"><span className="visually-hidden">Chart range</span><select aria-label="Chart range" value={range} onChange={(event) => setRange(Number(event.target.value) as 12 | 26)}><option value={12}>Last 3 months</option><option value={26}>Last 6 months</option></select></label></div>

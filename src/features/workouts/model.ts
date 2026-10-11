@@ -1,3 +1,4 @@
+/** Values persisted by the app. `drop` maps to the database enum `drop_set`. */
 export type SetType = "working" | "warmup" | "drop" | "failure" | "assisted" | "paused" | "amrap";
 
 export type LoggedSet = {
@@ -12,6 +13,9 @@ export type LoggedSet = {
   completed: boolean;
   completedAt: string | null;
   setType?: SetType;
+  /** Optional prior-session values shown as hints when a routine is launched. */
+  previousWeight?: number | null;
+  previousReps?: number | null;
 };
 
 export type WorkoutExercise = {

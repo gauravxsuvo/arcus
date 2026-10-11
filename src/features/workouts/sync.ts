@@ -76,8 +76,13 @@ export async function syncCompletedWorkout(workout: WorkoutRecord): Promise<void
       weight: set.weight,
       reps: set.reps,
       rpe: set.rpe,
-      set_type: "working" as const,
+      set_type: (set.setType === "drop" ? "drop_set" : set.setType ?? "working") as "working" | "warmup" | "drop_set" | "failure" | "assisted" | "paused" | "amrap",
       is_completed: set.completed,
+      is_warmup: set.setType === "warmup",
+      is_failure: set.setType === "failure",
+      is_drop_set: set.setType === "drop",
+      is_assisted: set.setType === "assisted",
+      is_paused: set.setType === "paused",
       completed_at: set.completedAt,
     })));
     if (sets.length) {

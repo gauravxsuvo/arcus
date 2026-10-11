@@ -1,0 +1,13 @@
+.root{position:relative;display:grid;place-items:center;min-width:36px;min-height:38px;z-index:2}
+.trigger,.option{font:inherit;cursor:pointer;color:var(--muted-foreground,#a1a1aa);background:rgba(255,255,255,.05);border:1px solid transparent}
+.trigger{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;font-size:12px;font-weight:700;transition:transform .16s ease,background .16s ease}
+.trigger:active{transform:scale(.94)}
+.working{color:var(--muted-foreground,#a1a1aa);background:rgba(255,255,255,.05)}
+.warmup{color:#fbbf24;background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.2)}
+.drop{color:#c084fc;background:rgba(192,132,252,.1);border-color:rgba(192,132,252,.2)}
+.failure{color:#fb7185;background:rgba(251,113,133,.1);border-color:rgba(251,113,133,.2)}
+.menu{position:absolute;top:calc(100% + 6px);left:0;display:grid;gap:4px;min-width:150px;padding:6px;background:var(--surface-raised,#18181b);border:1px solid var(--border,#34343a);border-radius:13px;box-shadow:0 12px 36px rgba(0,0,0,.36);z-index:20}
+.option{display:flex;align-items:center;gap:9px;min-height:38px;padding:6px 9px;border-radius:9px;text-align:left;font-size:12px}
+.option>span{display:grid;place-items:center;width:23px;height:23px;border-radius:7px;font-weight:800}
+.option.selected{outline:1px solid currentColor}
+.option:focus-visible,.trigger:focus-visible{outline:2px solid #4b8cff;outline-offset:2px}

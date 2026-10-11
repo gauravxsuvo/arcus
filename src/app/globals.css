@@ -716,8 +716,6 @@ progress::-webkit-progress-bar { background:var(--line); } progress::-webkit-pro
 .comparison-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; font-size:12px; color:var(--feature-muted); }
 .delta-positive { color:#4ade80; }.delta-negative { color:#f87171; }.record-gold { color:#facc15; }
 .journal-notes { white-space:pre-wrap; overflow-wrap:anywhere; }
-.share-card-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:16px 0; }
-.share-card-actions small { width:100%; color:var(--feature-muted); }
 .health-stub { display:flex!important; gap:12px; align-items:center; padding:14px 0; border-top:1px solid var(--line); }.health-stub input { width:18px!important; min-height:18px!important; }.health-stub span { margin-left:auto; padding:5px 8px; font:10px Consolas,monospace; border:1px solid var(--feature-border); border-radius:6px; }
 .nav-theme-toggle { width:100%; margin-bottom:12px; display:flex; gap:10px; align-items:center; justify-content:center; }
 html[data-theme="light"] :is(.social-shell,.workout-shell,.auth-shell,.profile-edit-card,.desktop-navigation) { color:#1a1a1a; background:#fafafa; border-color:#e5e5e5; }
