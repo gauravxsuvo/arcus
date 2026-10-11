@@ -75,4 +75,3 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Could not enable two-factor authentication." }, { status: 503 });
   } finally { client?.release(); }
 }
-
