@@ -1019,3 +1019,23 @@ html[data-theme="dark"] .global-announcement button:hover { background: #1c2b43;
 html[data-theme="dark"] .profile-warning-list { border-color: #5a4827; background: #241e11; color: #f3d69a; }
 html[data-theme="dark"] .profile-warning-list article { border-color: #493b22; }
 html[data-theme="dark"] .profile-warning-list article small { color: #b79c68; }
+
+.totp-settings { margin-top: 24px; }
+.totp-settings > p { max-width: 640px; color: var(--muted); line-height: 1.65; }
+.totp-enrollment,.totp-disable,.totp-backup { display: grid; justify-items: start; gap: 14px; margin-top: 20px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface) 72%, transparent); }
+.totp-enrollment > img { display: block; width: 192px; height: 192px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: #09090b; }
+.totp-enrollment p,.totp-backup p { margin: 0; color: var(--muted); line-height: 1.6; }
+.totp-enrollment details { display: grid; gap: 10px; }
+.totp-enrollment details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.totp-enrollment details code,.totp-code-grid code { overflow-wrap: anywhere; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--background); color: var(--ink); font: 13px ui-monospace, monospace; }
+.totp-enrollment label,.totp-disable label { display: grid; gap: 8px; width: min(360px,100%); color: var(--muted); }
+.totp-enrollment input,.totp-disable input { min-height: 48px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--background); color: var(--ink); font: inherit; font-size: 16px; }
+.totp-disable > p { display: flex; align-items: center; gap: 8px; color: var(--accent); }
+.totp-backup h3 { margin: 0; font-size: 16px; }
+.totp-code-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; width: min(480px,100%); }
+.totp-message { color: var(--accent); }
+.security-settings-shell { max-width: 960px; margin-inline: auto; padding: 36px 24px 120px; }
+.security-settings-shell > .activity-heading h1 { margin: 8px 0; font-size: clamp(32px,6vw,48px); }
+.security-settings-intro { color: var(--muted); line-height: 1.6; }
+html[data-theme="light"] .totp-enrollment details code,html[data-theme="light"] .totp-code-grid code { background: #f6f7f9; }
+@media(max-width:640px) { .security-settings-shell { padding: 26px 16px 110px; }.totp-enrollment,.totp-disable,.totp-backup { width: 100%; padding: 14px; }.totp-code-grid { grid-template-columns: 1fr 1fr; } }

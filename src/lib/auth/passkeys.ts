@@ -11,6 +11,7 @@ import {
 import { randomUUID } from "node:crypto";
 import { getDatabasePool } from "@/lib/db/pool";
 import { siteOrigin } from "@/lib/site-metadata";
+import { createMfaChallenge } from "./mfa";
 import { createPasskeySession, getAccountById, type AccountView } from "./server";
 
 const CHALLENGE_LIFETIME_MS = 5 * 60 * 1000;
@@ -101,13 +102,13 @@ export async function authenticationOptions(request: Request, username?: string)
   return { options, challengeId };
 }
 
-type PasskeyRow = { id: string; account_id: string; credential_id: string; public_key: Buffer; counter: number | string; transports: unknown; is_banned: boolean; is_suspended: boolean; suspended_until: Date | null };
+type PasskeyRow = { id: string; account_id: string; credential_id: string; public_key: Buffer; counter: number | string; transports: unknown; is_banned: boolean; is_suspended: boolean; suspended_until: Date | null; totp_enabled: boolean };
 
 export async function verifyAuthentication(request: Request, challengeId: string, response: AuthenticationResponseJSON) {
   const stored = await consumeChallenge(challengeId, "authentication");
   const result = await getDatabasePool().query<PasskeyRow>(
     `select p.id, p.account_id, p.credential_id, p.public_key, p.counter, p.transports,
-            a.is_banned, a.is_suspended, a.suspended_until
+            a.is_banned, a.is_suspended, a.suspended_until, a.totp_enabled
        from public.arcus_passkeys p join public.arcus_accounts a on a.id = p.account_id
        where p.credential_id = $1`,
     [response.id],
@@ -126,6 +127,7 @@ export async function verifyAuthentication(request: Request, challengeId: string
   await getDatabasePool().query("update public.arcus_passkeys set counter = $2, last_used_at = now() where id = $1", [row.id, verification.authenticationInfo.newCounter]);
   const user = await getAccountById(row.account_id);
   if (!user) throw new Error("This account is unavailable.");
+  if (row.totp_enabled) return { user, mfaRequired: true as const, challenge: await createMfaChallenge(user.id) };
   const session = await createPasskeySession(user.id);
   return { user, session };
 }

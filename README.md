@@ -1,18 +1,18 @@
-# Forge Training
+# ARCUS Training
 
-Forge is a local-first training log in active development. It includes Supabase email/password auth and profile onboarding, exercise search, an IndexedDB-backed workout logger, rest timer, completion summaries, history, strength and volume analytics, training programs with progression settings, bodyweight and measurement tracking, custom exercises, and an installable offline shell. Completed workouts and queued program, physique, and custom exercise changes sync to Supabase when online and signed in; active drafts remain on the current device until completion. Multi-device conflict resolution and full browser-level offline verification remain outstanding.
+ARCUS is a local-first training log. The app uses an IndexedDB-backed workout logger for offline entry and Portways PostgreSQL over serverless WebSockets for account, workout, and library sync. Active drafts remain on the current device until completion. Multi-factor authentication uses encrypted TOTP secrets and one-time hashed recovery codes. Password reset email delivery requires a configured Resend API key and verified sender.
 
 ## Local development
 
 1. Install Node.js 22.6 or later.
 2. Run `npm install`.
-3. Copy `.env.example` to `.env.local` and set `PORTWAYS_DB_TOKEN`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE` from Portways. These values are server-only; never prefix them with `NEXT_PUBLIC_`.
-4. Apply the Portways schema once with `npm run db:init`.
+3. Copy `.env.example` to `.env.local` and set `PORTWAYS_DB_TOKEN`, `PGUSER`, `PGPASSWORD`, and `PGDATABASE` from Portways. Set a stable `ARCUS_TOTP_ENCRYPTION_KEY` (generate one with the command in `.env.example`); keep it private and back it up. Set `RESEND_API_KEY` and a verified `AUTH_EMAIL_FROM` to enable password-reset email. All are server-only; never prefix them with `NEXT_PUBLIC_`.
+4. Apply the Portways schema once with `npm run db:init`, then apply feature migrations with `npm run db:migrate:mfa`.
 5. Run `npm run dev` and open `http://localhost:3000`.
 
-The runtime connects directly to Portways over an encrypted WebSocket, so local development and Vercel use the same four database variables and need no local bridge. The bridge script is still available for external PostgreSQL tools. Do not run destructive database checks against the shared production database.
+The runtime connects directly to Portways over an encrypted WebSocket, so local development and Vercel use the same four database variables and need no local bridge. The bridge script is still available for external PostgreSQL tools. Do not run destructive database checks against the shared production database. Use the same `ARCUS_TOTP_ENCRYPTION_KEY` anywhere the same database is accessed; changing it makes already-enrolled authenticator secrets unreadable.
 
-For Vercel, add the four Portways variables in the project's server-side Environment Variables settings. Use the same values for Development and Production only if you intend both environments to share the same accounts and workout data. Vercel can create multiple function instances; each instance has a pool limit of three, so the combined number of active instances must stay within the connection limit on your Portways token.
+For Vercel, add the Portways variables, `ARCUS_TOTP_ENCRYPTION_KEY`, `RESEND_API_KEY`, `AUTH_EMAIL_FROM`, and `SITE_URL` in the project's server-side Environment Variables settings. Use the same database and encryption values for Development and Production only if you intend both environments to share accounts, workouts, and MFA. Vercel can create multiple function instances; each instance has a pool limit of three, so the combined number of active instances must stay within the connection limit on your Portways token.
 
 ## Project checks
 

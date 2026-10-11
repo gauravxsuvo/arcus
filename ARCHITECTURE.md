@@ -18,7 +18,7 @@ The website follows the typography-led, minimal editorial direction in `DESIGN_S
 
 `/history/[id]?edit=1` opens the saved-workout editor using the existing dynamic history shell, including offline fallback. `components/history/workout-editor.tsx` holds an isolated draft: Cancel discards changes, while Save validates with `features/workouts/edit.ts`, writes the same workout ID to IndexedDB and marks the new revision pending for the existing paced sync manager. Duration and date edits produce a consistent start/completion pair. Set types, groups, program references and import metadata remain intact.
 
-The workout model adds optional gym/location, per-exercise notes, strength/cardio tracking, distance in km, duration in seconds, and up to three photo/video attachments. These fields remain backward compatible and are included in validated JSON backups and account-scoped PostgreSQL `arcus_workouts.payload` JSONB; no table migration is necessary. Photos resize in the browser. Videos are limited to 400 KB; combined media data URLs are limited to 600,000 characters and the complete saved record to 900,000 UTF-8 bytes, below the API request cap. Legacy Supabase sync keeps extended records pending instead of acknowledging fields it cannot store. Workouts remain private; public feed visibility requires a separate sharing implementation.
+The workout model adds optional gym/location, per-exercise notes, strength/cardio tracking, distance in km, duration in seconds, and up to three photo/video attachments. These fields remain backward compatible and are included in validated JSON backups and account-scoped PostgreSQL `arcus_workouts.payload` JSONB; no table migration is necessary. Photos resize in the browser. Videos are limited to 400 KB; combined media data URLs are limited to 600,000 characters and the complete saved record to 900,000 UTF-8 bytes, below the API request cap. Workouts remain private; public feed visibility requires a separate sharing implementation.
 
 ## Full feature expansion (October 2026)
 
@@ -65,19 +65,14 @@ Next.js server boundary
   ├─ `/api/auth/*`: central accounts, sessions, and profiles
   └─ `/api/sync/workout`: idempotent completed-workout storage
 
-Portways PostgreSQL (through the local WebSocket bridge)
+Portways PostgreSQL (through the secure WebSocket gateway)
   ├─ `arcus_accounts`, `arcus_sessions`, and `arcus_workouts`
   ├─ Exercise/muscle catalog and future server-owned records
   └─ `supabase/portways.sql` creates the Arcus-owned tables
 
-Supabase PostgreSQL (optional legacy sync boundary)
-  ├─ Exercise/muscle catalog
-  ├─ Workouts, exercises, sets
-  ├─ Programs and physique entries
-  └─ RLS scoped by auth.uid()
 ```
 
-The sign-in flow is Portways-backed username/password auth with a local IndexedDB cache for offline use. The server stores only scrypt password hashes and hashed HTTP-only session tokens. Existing Supabase sync adapters remain available for older sessions, while new completed workouts use the Portways API.
+The sign-in flow is Portways-backed username/password auth with a local IndexedDB cache for offline use. The server stores scrypt password hashes and hashed HTTP-only session tokens. All remote workout and library synchronization goes through authenticated Portways APIs.
 
 ## Folder structure
 
@@ -118,7 +113,6 @@ src/
   lib/db/pool.ts
   features/import-export/{csv,backup,importer}.ts
   features/import-export/hevy/{parser,mapper,normalizer,validator,exporter}.ts
-  lib/supabase/{client,server}.ts
 supabase/
   migrations/
   portways.sql
@@ -160,9 +154,9 @@ All local writes happen before the UI acknowledges a mutation. Client-generated 
 - Imported workouts retain `importSource`, `importBatchId`, and a stable source fingerprint so repeated files can be detected and an explicit batch-only undo can be offered.
 - Raw CSV files are never uploaded or stored by the browser importer.
 
-### Supabase PostgreSQL (optional)
+### Portways MFA configuration
 
-The migrations define `profiles`, `muscles`, `exercises`, `exercise_muscles`, `exercise_favorites`, `workouts`, `workout_exercises`, `sets`, `programs`, `program_days`, `program_day_exercises`, `bodyweight_entries`, and `body_measurements`. Private tables use `user_id` ownership and RLS. System exercise rows are readable but not editable by users.
+Set a stable server-only `ARCUS_TOTP_ENCRYPTION_KEY` (base64-encoded 32 random bytes) and apply the additive schema with `npm run db:migrate:mfa`. Password reset delivery also requires a Resend API key and a verified `AUTH_EMAIL_FROM` sender. Historical SQL files remain under `supabase/`; the application has no Supabase runtime client.
 
 ## Routing
 
@@ -193,7 +187,7 @@ Add a new route only when it represents a distinct user goal. Settings, sync sta
 - Page-local React state owns transient form, picker, timer, and filter state.
 - IndexedDB repositories own durable local state; pages never manipulate object stores directly.
 - Domain modules own calculations such as totals, 1RM, PRs, progression, readiness, and plateau signals.
-- Portways database access is isolated in `src/lib/db/pool.ts` and `src/lib/auth/server.ts`; Supabase clients remain isolated in `src/lib/supabase`.
+- Portways database access is isolated in `src/lib/db/pool.ts` and `src/lib/auth/server.ts`; the bounded WebSocket pool is used across environments.
 - CSV and HEVY assumptions are isolated under `src/features/import-export`; the UI consumes structured reports rather than parsing rows itself.
 - No global store is needed until a state must span unrelated routes. If that happens, add a small scoped store rather than moving durable records into memory.
 
@@ -202,7 +196,7 @@ Add a new route only when it represents a distinct user goal. Settings, sync sta
 1. Write the active workout locally before updating the UI.
 2. Keep timestamps and stable client IDs on every local record.
 3. Mark completed workouts, programs, physique entries, and custom exercises `pending`.
-4. The sync manager runs on initial load, focus, and reconnect. Completed workouts use the Portways API when an Arcus session exists; the existing Supabase adapter remains a fallback for older sessions.
+4. The sync manager runs on initial load, focus, and reconnect. Completed workouts and library changes use authenticated Portways APIs when an Arcus session exists.
 5. Sync is throttled to 30 seconds and processes bounded batches of ten records.
 6. Failures leave local data intact and retry after a delay; a failed network request never blocks workout logging.
 7. Server upserts are idempotent and every Portways query scopes records through the HTTP-only session account ID.

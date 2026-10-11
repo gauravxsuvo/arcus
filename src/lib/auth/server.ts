@@ -7,6 +7,7 @@ import { getDatabasePool } from "@/lib/db/pool";
 import { hashPassword, verifyPassword } from "./password";
 import type { ProfileDetails, UserProfile } from "@/features/profile/model";
 import { avatarDataUrl } from "./avatar";
+import { createMfaChallenge } from "./mfa";
 
 export const SESSION_COOKIE = "arcus_session";
 const SESSION_DAYS = 30;
@@ -63,7 +64,7 @@ function tokenHash(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-async function createSession(accountId: string) {
+export async function createSessionForAccount(accountId: string) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   await getDatabasePool().query(
@@ -74,7 +75,7 @@ async function createSession(accountId: string) {
 }
 
 export async function createPasskeySession(accountId: string) {
-  return createSession(accountId);
+  return createSessionForAccount(accountId);
 }
 
 export function setSessionCookie(response: Response, token: string, expiresAt: Date) {
@@ -134,20 +135,24 @@ export async function registerAccount(input: { username: string; email: string; 
      returning id, username, email, display_name, experience, goals, height_cm, bio, avatar_image, avatar_mime_type, avatar_object_key, profile_data, is_pro, subscription_status`,
     [id, username, usernameNormalized, email, emailNormalized, passwordHash, input.name.trim()],
   );
-  const session = await createSession(id);
+  const session = await createSessionForAccount(id);
   return { user: toAccountView(result.rows[0]), session };
 }
 
 export async function loginAccount(usernameInput: string, password: string) {
-  const result = await getDatabasePool().query<AccountRow & { password_hash: string }>(
-    `select id, username, email, display_name, experience, goals, height_cm, bio, avatar_image, avatar_mime_type, avatar_object_key, profile_data, is_pro, subscription_status, password_hash
+  const result = await getDatabasePool().query<AccountRow & { password_hash: string; totp_enabled: boolean }>(
+    `select id, username, email, display_name, experience, goals, height_cm, bio, avatar_image, avatar_mime_type, avatar_object_key, profile_data, is_pro, subscription_status, password_hash, totp_enabled
        from public.arcus_accounts where username_normalized = $1 and is_banned = false
          and (is_suspended = false or suspended_until <= now())`,
     [normalizeUsername(usernameInput)],
   );
   const row = result.rows[0];
   if (!row || !(await verifyPassword(password, row.password_hash))) throw new Error("Incorrect username or password.");
-  const session = await createSession(row.id);
+  if (row.totp_enabled) {
+    const challenge = await createMfaChallenge(row.id);
+    return { mfaRequired: true as const, challenge };
+  }
+  const session = await createSessionForAccount(row.id);
   return { user: toAccountView(row), session };
 }
 
