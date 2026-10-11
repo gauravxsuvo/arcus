@@ -15,6 +15,8 @@ import { useProfile } from "@/components/shared/user-profile-provider";
 import { formatWeight,toDisplayWeight,weightUnit } from "@/features/training/logic";
 import { PasskeySettings } from "@/components/profile/passkey-settings";
 import { WorkoutActivitySummary } from "@/components/profile/WorkoutActivitySummary";
+import { SleepCheckInModal } from "@/components/recovery/SleepCheckInModal";
+import { BodyHeatmap } from "@/components/recovery/BodyHeatmap";
 
 type Profile = { id: string; display_name: string | null; experience: string | null; goals: string[]; height_cm: number | null; bio?: string | null; avatarUrl?: string | null; username: string };
 type WeekProgress = { label: string; hours: number; volume: number; sessions: number; start: number };
@@ -141,6 +143,10 @@ export default function ProfilePage() {
       <GoalSummary workouts={workouts}/>
 
       <WorkoutActivitySummary userId={profile?.id} workouts={workouts} units={units}/>
+
+      <SleepCheckInModal showTrend={false}/>
+
+      <BodyHeatmap/>
 
       <section className="profile-chart-card">
         <div className="profile-chart-heading"><div><p className="social-kicker">YOUR PROGRESS</p><h2>{chartValueLabel} <span>this week</span></h2></div><label className="range-picker"><span className="visually-hidden">Chart range</span><select aria-label="Chart range" value={range} onChange={(event) => setRange(Number(event.target.value) as 12 | 26)}><option value={12}>Last 3 months</option><option value={26}>Last 6 months</option></select></label></div>

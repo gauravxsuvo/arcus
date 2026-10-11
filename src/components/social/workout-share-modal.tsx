@@ -13,16 +13,15 @@ import styles from "./workout-share.module.css";
 
 type BusyState = "capturing" | "sharing" | "saving" | null;
 
-export function WorkoutShareModal({ workout }: { workout: WorkoutRecord }) {
+export function WorkoutShareModal({ workout, onClose }: { workout: WorkoutRecord; onClose: () => void }) {
   const { user, preferences } = useProfile();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [records, setRecords] = useState(0);
   const [recordsReady, setRecordsReady] = useState(false);
   const [image, setImage] = useState<Blob | null>(null);
   const [busy, setBusy] = useState<BusyState>(null);
   const [message, setMessage] = useState("");
   const storyRef = useRef<HTMLElement>(null);
-  const openerRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const identity = {
     name: user?.name?.trim() || "Athlete",
@@ -32,11 +31,10 @@ export function WorkoutShareModal({ workout }: { workout: WorkoutRecord }) {
 
   useEffect(() => {
     if (!open) return;
-    const opener = openerRef.current;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape" && !busy) { setOpen(false); onClose(); }
       if (event.key === "Tab" && modalRef.current) {
         const focusable = modalRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), [href], [tabindex]:not([tabindex="-1"])');
         if (!focusable.length) return;
@@ -51,9 +49,13 @@ export function WorkoutShareModal({ workout }: { workout: WorkoutRecord }) {
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
-      opener?.focus();
     };
-  }, [open]);
+  }, [open, busy, onClose]);
+
+  function close() {
+    setOpen(false);
+    onClose();
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -113,10 +115,9 @@ export function WorkoutShareModal({ workout }: { workout: WorkoutRecord }) {
   const waiting = busy === "capturing";
 
   return <>
-    <button ref={openerRef} type="button" className="outline-button" onClick={() => setOpen(true)}><Share2 size={16} aria-hidden="true"/> Share workout</button>
-    {open && createPortal(<div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setOpen(false); }}>
+    {open && createPortal(<div className={styles.modalBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) close(); }}>
       <div ref={modalRef} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="workout-share-title" aria-describedby="workout-share-description">
-        <header className={styles.modalHeader}><div><h2 id="workout-share-title">Share your session</h2><p id="workout-share-description">A story-sized card, ready for your camera roll.</p></div><button className={styles.closeButton} type="button" aria-label="Close share workout dialog" onClick={() => setOpen(false)} disabled={Boolean(busy)}><X size={19}/></button></header>
+        <header className={styles.modalHeader}><div><h2 id="workout-share-title">Share your session</h2><p id="workout-share-description">A story-sized card, ready for your camera roll.</p></div><button className={styles.closeButton} type="button" aria-label="Close share workout dialog" onClick={close} disabled={Boolean(busy)}><X size={19}/></button></header>
         <div className={styles.previewStage}><WorkoutStoryCard {...cardProps} className={styles.storyPreview}/></div>
         <div className={styles.modalActions}>
           <button className={styles.shareButton} type="button" disabled={!image || Boolean(busy)} onClick={() => void exportImage("share")}>

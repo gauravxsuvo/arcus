@@ -11,4 +11,6 @@ export type FeedWorkout = {
   durationMinutes: number; volumeKg: number; exercises: { name: string; sets: number }[];
   likes: number; comments: number; liked: boolean;
 };
+export type FeedCursor = { updatedAt: string; id: string; ownerId: string };
+export type FeedWorkoutPage = { posts: FeedWorkout[]; nextCursor: FeedCursor | null };
 export type FeedComment = { id: string; user: Pick<PublicUser, "id" | "name" | "handle">; text: string; createdAt: string };

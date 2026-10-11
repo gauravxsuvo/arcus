@@ -1,7 +1,7 @@
 "use server";
 import { getCurrentAccount as auth } from "@/lib/auth/server";
 import { getDatabasePool } from "@/lib/db/pool";
-import { commentSchema, followSchema, likeSchema, searchSchema, targetSchema, type PublicUser, type FeedWorkout, type FeedComment } from "./model";
+import { commentSchema, followSchema, likeSchema, searchSchema, targetSchema, type PublicUser, type FeedComment, type FeedWorkout, type FeedWorkoutPage } from "./model";
 import { z } from "zod";
 
 // Select public identity only. Never serialize an AccountView or the workout payload.
@@ -10,17 +10,23 @@ const identity = `a.id as "userId", a.display_name as name, a.username as handle
 const active = `a.is_banned=false and (a.is_suspended=false or a.suspended_until<=now())`;
 const publicWorkoutPredicate = `w.is_public=true and w.payload->>'status'='completed' and ${active}`;
 
-export async function getFeedWorkouts(tab: unknown = "discover"): Promise<FeedWorkout[]> {
+const feedPageSchema = z.object({
+  tab: z.enum(["following", "discover"]).default("discover"),
+  cursor: z.object({ updatedAt: z.string().datetime(), id: z.string().uuid(), ownerId: z.string().uuid() }).strict().nullable().optional(),
+}).strict();
+
+export async function getFeedWorkoutsPage(input: unknown = {}): Promise<FeedWorkoutPage> {
   const session = await auth();
-  const mode = z.enum(["following", "discover"]).parse(tab);
-  if (mode === "following" && !session) return [];
+  const { tab: mode, cursor = null } = feedPageSchema.parse(input);
+  if (mode === "following" && !session) return { posts: [], nextCursor: null };
   const { rows } = await getDatabasePool().query(`
     with recent as (
       select w.id,w.account_id,w.payload,w.updated_at from public.arcus_workouts w
       join public.arcus_accounts a on a.id=w.account_id where ${publicWorkoutPredicate}
       and ($2::text='discover' or exists(select 1 from public.arcus_follows f where f.follower_id=$1::uuid and f.following_id=w.account_id))
-      order by w.updated_at desc,w.id desc,w.account_id desc limit 20
-    ) select w.id,w.account_id as "ownerId",${identity},
+      and ($3::timestamptz is null or (w.updated_at,w.id,w.account_id)<($3::timestamptz,$4::uuid,$5::uuid))
+      order by w.updated_at desc,w.id desc,w.account_id desc limit 21
+    ) select w.id,w.account_id as "ownerId",w.updated_at as "cursorUpdatedAt",${identity},
       w.payload->>'name' as title,w.payload->>'completedAt' as "completedAt",w.payload->>'startedAt' as "startedAt",
       coalesce((select jsonb_agg(jsonb_build_object('name',e->>'name','sets',
         (select count(*) from jsonb_array_elements(e->'sets') s where s->>'completed'='true')))
@@ -34,15 +40,27 @@ export async function getFeedWorkouts(tab: unknown = "discover"): Promise<FeedWo
       exists(select 1 from public.arcus_workout_likes l where l.workout_id=w.id and l.workout_owner_id=w.account_id and l.account_id=$1::uuid) as liked,
       exists(select 1 from public.arcus_follows f where f.follower_id=$1::uuid and f.following_id=a.id) as following
     from recent w join public.arcus_accounts a on a.id=w.account_id order by w.updated_at desc,w.id desc,w.account_id desc
-  `, [session?.id ?? null, mode]);
-  return rows.map(row => ({
+  `, [session?.id ?? null, mode, cursor?.updatedAt ?? null, cursor?.id ?? null, cursor?.ownerId ?? null]);
+  const hasMore = rows.length > 20;
+  const pageRows = rows.slice(0, 20);
+  const last = pageRows.at(-1);
+  const nextCursor = hasMore && last ? {
+    updatedAt: new Date(last.cursorUpdatedAt).toISOString(), id: last.id, ownerId: last.ownerId,
+  } : null;
+  return { posts: pageRows.map(row => ({
     id: row.id,ownerId: row.ownerId,
     user: { id: row.userId,name: row.name,handle: row.handle,avatarUrl: row.avatarUrl,following: row.following },
     title: row.title,completedAt: row.completedAt,
     durationMinutes: Math.max(0,Math.round((Date.parse(row.completedAt)-Date.parse(row.startedAt))/60000)) || 0,
     volumeKg: Number(row.volume),exercises: row.exercises,likes: row.likes,comments: row.comments,liked: row.liked,
-  }));
+  })), nextCursor };
 }
+
+/** Backwards-compatible first-page loader for existing server callers. */
+export async function getFeedWorkouts(tab: unknown = "discover"): Promise<FeedWorkout[]> {
+  return (await getFeedWorkoutsPage({ tab })).posts;
+}
+
 export async function searchUsers(query: unknown): Promise<PublicUser[]> {
   const session = await auth();
   const text = searchSchema.parse(query);

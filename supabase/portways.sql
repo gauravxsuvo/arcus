@@ -136,6 +136,7 @@ create table if not exists public.arcus_workouts (
 );
 
 create index if not exists arcus_workouts_account_idx on public.arcus_workouts(account_id, updated_at desc);
+create index if not exists arcus_workouts_account_recent_idx on public.arcus_workouts(account_id, updated_at desc, id desc);
 
 -- ARCUS Pro and the relational foundation for the social feed. Keep this
 -- idempotent so `db:init` also provisions fresh Portways databases.
@@ -168,6 +169,22 @@ create index if not exists arcus_subscriptions_account_status_idx
 alter table public.arcus_workouts add column if not exists is_public boolean not null default true;
 create index if not exists arcus_workouts_public_updated_idx
   on public.arcus_workouts(is_public, updated_at desc);
+create index if not exists arcus_social_recent_idx
+  on public.arcus_workouts(updated_at desc, id desc, account_id desc)
+  where is_public=true and payload->>'status'='completed';
+
+create table if not exists public.arcus_weight_logs (
+  id uuid primary key default gen_random_uuid(),
+  account_id uuid not null references public.arcus_accounts(id) on delete cascade,
+  date text not null check (date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'),
+  weight numeric(7,2) not null check (weight > 0),
+  unit text not null default 'kg' check (unit in ('kg', 'lbs')),
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint arcus_weight_logs_account_date_unique unique (account_id, date)
+);
+create index if not exists arcus_weight_logs_account_date_idx on public.arcus_weight_logs(account_id, date desc);
 
 create table if not exists public.arcus_follows (
   follower_id uuid not null references public.arcus_accounts(id) on delete cascade,
@@ -199,6 +216,25 @@ create table if not exists public.arcus_workout_comments (
 );
 create index if not exists arcus_workout_comments_workout_idx
   on public.arcus_workout_comments(workout_owner_id, workout_id, created_at desc);
+
+create table if not exists public.arcus_sleep_logs (
+  id uuid primary key default gen_random_uuid(),
+  account_id uuid not null references public.arcus_accounts(id) on delete cascade,
+  date text not null check (date ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'),
+  bedtime timestamptz not null,
+  wake_time timestamptz not null,
+  duration_minutes integer not null check (duration_minutes between 30 and 1440),
+  quality_rating smallint not null check (quality_rating between 1 and 3),
+  readiness_score smallint not null check (readiness_score between 0 and 100),
+  tags text[] not null default '{}',
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint arcus_sleep_logs_account_date_unique unique (account_id, date),
+  constraint arcus_sleep_logs_chronology_check check (wake_time > bedtime)
+);
+create index if not exists arcus_sleep_logs_account_date_idx
+  on public.arcus_sleep_logs(account_id, date desc);
 
 create table if not exists public.arcus_admin_audit (
   id uuid primary key default gen_random_uuid(),

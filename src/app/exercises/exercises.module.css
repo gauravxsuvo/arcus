@@ -60,3 +60,5 @@
 @media(max-width:360px) { .page:global(.workout-shell) { padding-inline:16px; }.collections button { font-size:11px; }.collections button svg { display:none; }.card { padding:14px; }.cardMain { gap:10px; }.glyph { width:38px; height:38px; }.detailLink strong { font-size:14px; }.add { padding:0 10px; }.moreFilters summary { gap:4px; }.search { padding-left:12px; } }
 @media(max-width:760px) { .moreFilters[open] .filterGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }.moreFilters[open] .filterGrid label:last-child { grid-column:1/-1; }.moreFilters[open] { padding-top:0; } }
 @media(prefers-reduced-motion:reduce) { .card { transition:none; } }
+
+.card { content-visibility: auto; contain-intrinsic-size: auto 172px; }

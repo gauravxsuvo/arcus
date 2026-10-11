@@ -26,6 +26,9 @@
     "db:migrate:passkeys": "node scripts/migrate-passkeys.mjs",
     "db:migrate:routines": "node scripts/migrate-routines.mjs",
     "db:migrate:mfa": "node scripts/migrate-mfa.mjs",
+    "db:migrate:sleep": "node scripts/migrate-sleep-readiness.mjs",
+    "db:migrate:weight": "node scripts/migrate-weight-logs.mjs",
+    "db:migrate:workout-performance": "node scripts/migrate-workout-performance.mjs",
     "admin:configure": "node scripts/configure-admin.mjs",
     "db:bridge": "node scripts/portways-db-bridge.mjs --gateway wss://db.portways.app/v1"
   },

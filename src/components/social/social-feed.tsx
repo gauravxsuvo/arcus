@@ -5,8 +5,8 @@ import Image from "next/image";
 import { Dumbbell, Heart, MessageCircle, Search, Share2, LoaderCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/components/shared/toast-provider";
 import { useDebounce } from "@/hooks/useDebounce";
-import { addWorkoutComment, deleteWorkoutComment, getFeedWorkouts, getWorkoutComments, searchUsers, setFollowing, setWorkoutLike, setWorkoutVisibility } from "@/features/social/actions";
-import type { FeedComment, FeedWorkout, PublicUser } from "@/features/social/model";
+import { addWorkoutComment, deleteWorkoutComment, getFeedWorkoutsPage, getWorkoutComments, searchUsers, setFollowing, setWorkoutLike, setWorkoutVisibility } from "@/features/social/actions";
+import type { FeedComment, FeedCursor, FeedWorkout, PublicUser } from "@/features/social/model";
 import styles from "./social-feed.module.css";
 
 function Avatar({ user }: { user: PublicUser }) {
@@ -115,10 +115,12 @@ export function FeedPost({ post,viewerId,onFollow }: { post: FeedWorkout; viewer
     </div>}
   </article>;
 }
-export function SocialFeed({ initialPosts,viewerId,initialError=false }: { initialPosts: FeedWorkout[]; viewerId: string | null; initialError?: boolean }) {
+export function SocialFeed({ initialPosts,initialCursor,viewerId,initialError=false }: { initialPosts: FeedWorkout[]; initialCursor: FeedCursor | null; viewerId: string | null; initialError?: boolean }) {
   const [tab,setTab] = useState<"discover" | "following">("discover");
   const [posts,setPosts] = useState(initialPosts);
+  const [nextCursor,setNextCursor] = useState<FeedCursor | null>(initialCursor);
   const [loading,setLoading] = useState(false);
+  const [paging,setPaging] = useState(false);
   const [error,setError] = useState(initialError);
   const requestId = useRef(0);
   const { showToast } = useToast();
@@ -143,10 +145,24 @@ export function SocialFeed({ initialPosts,viewerId,initialError=false }: { initi
   },[debounced]);
   async function load(mode: "discover" | "following") {
     const id=++requestId.current;
-    setTab(mode); setLoading(true); setError(false);
-    try { const rows=await getFeedWorkouts(mode); if (id===requestId.current) setPosts(rows); }
+    setTab(mode); setLoading(true); setPaging(false); setError(false);
+    try { const page=await getFeedWorkoutsPage({ tab: mode }); if (id===requestId.current) { setPosts(page.posts); setNextCursor(page.nextCursor); } }
     catch { if(id===requestId.current) { setError(true); showToast("Feed unavailable. Try again.","error"); } }
     finally { if(id===requestId.current) setLoading(false); }
+  }
+  async function loadMore() {
+    if (!nextCursor || loading || paging) return;
+    const id=requestId.current;
+    setPaging(true);
+    try {
+      const page=await getFeedWorkoutsPage({ tab, cursor: nextCursor });
+      if(id===requestId.current) {
+        setPosts(current=>[...current,...page.posts.filter(post=>!current.some(existing=>existing.id===post.id&&existing.ownerId===post.ownerId))]);
+        setNextCursor(page.nextCursor);
+      }
+    } catch {
+      if(id===requestId.current) showToast("Could not load more workouts. Try again.","error");
+    } finally { if(id===requestId.current) setPaging(false); }
   }
   const followLocks = useRef(new Set<string>());
   const [pendingFollowIds,setPendingFollowIds] = useState(new Set<string>());
@@ -182,7 +198,7 @@ export function SocialFeed({ initialPosts,viewerId,initialError=false }: { initi
       {(["following","discover"] as const).map(mode=><button key={mode} type="button" className={styles.tab} role="tab" id={"social-tab-"+mode} aria-controls="social-feed-panel" aria-selected={tab===mode} tabIndex={tab===mode?0:-1} onClick={()=>void load(mode)}>{mode==="following"?"Following":"Discover"}</button>)}
     </div>
     <section role="tabpanel" id="social-feed-panel" tabIndex={0} aria-labelledby={"social-tab-"+tab} aria-busy={loading}>
-      {loading ? <div className={styles.empty}><LoaderCircle className={styles.spin} aria-label="Loading feed"/></div> : error ? <div className={styles.empty}><p>We couldn’t load the feed.</p><button type="button" onClick={()=>void load(tab)}>Try again</button></div> : visiblePosts.length ? <div className={styles.feedList}>{visiblePosts.map(post=><FeedPost key={post.ownerId+post.id} post={post} viewerId={viewerId} onFollow={followControl}/>)}</div> : <FeedEmptyState/>}
+      {loading ? <div className={styles.empty}><LoaderCircle className={styles.spin} aria-label="Loading feed"/></div> : error ? <div className={styles.empty}><p>We couldn’t load the feed.</p><button type="button" onClick={()=>void load(tab)}>Try again</button></div> : visiblePosts.length ? <><div className={styles.feedList}>{visiblePosts.map(post=><FeedPost key={post.ownerId+post.id} post={post} viewerId={viewerId} onFollow={followControl}/>)}</div>{nextCursor && <div className={styles.loadMore}><button type="button" disabled={paging} onClick={()=>void loadMore()}>{paging && <LoaderCircle className={styles.spin}/>} {paging ? "Loading…" : "Load more workouts"}</button></div>}</> : <FeedEmptyState/>}
     </section>
   </main>;
 }

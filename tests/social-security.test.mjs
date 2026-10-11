@@ -49,7 +49,7 @@ test("private or unavailable workouts cannot be liked or read",async()=>{
 test("feed joins user identity, caps results, and explicitly strips sensitive fields",async()=>{
   let calls=0;
   const api=actions({id:owner},async(sql,values)=>{
-    calls++; assert.match(sql,/join public.arcus_accounts/); assert.match(sql,/limit 20/);
+    calls++; assert.match(sql,/join public.arcus_accounts/); assert.match(sql,/limit 21/); // 20 rows plus one cursor lookahead
     assert.ok(!sql.includes("password_hash")&&!sql.includes("a.email")); assert.equal(values[0],owner);
     return {rows:[{id:workout,ownerId:other,userId:other,name:"Lifter",handle:"lifter",avatarUrl:null,following:false,title:"Training",completedAt:"2026-10-10T10:30:00Z",startedAt:"2026-10-10T10:00:00Z",volume:"100",exercises:[],likes:0,comments:0,liked:false,email:"hidden",password:"hidden",stripeCustomerId:"hidden"}]};
   });
@@ -57,6 +57,23 @@ test("feed joins user identity, caps results, and explicitly strips sensitive fi
   assert.equal(rows[0].durationMinutes,30); assert.equal(rows[0].volumeKg,100); assert.equal(calls,1);
   assert.deepEqual(Object.keys(rows[0].user).sort(),["avatarUrl","following","handle","id","name"]);
   assert.ok(!JSON.stringify(rows).includes("hidden"));
+});
+test("feed keyset cursor uses the stable descending tuple and returns at most twenty posts",async()=>{
+  const cursor={updatedAt:"2026-10-10T10:00:00.000Z",id:workout,ownerId:owner};
+  const rows=Array.from({length:21},(_,index)=>({
+    id:`00000000-0000-4000-8000-${String(index+10).padStart(12,"0")}`,ownerId:other,cursorUpdatedAt:new Date(Date.UTC(2026,9,10,9,59,59-index)).toISOString(),
+    userId:other,name:"Lifter",handle:"lifter",avatarUrl:null,following:false,title:"Training",completedAt:"2026-10-10T10:30:00Z",startedAt:"2026-10-10T10:00:00Z",volume:"100",exercises:[],likes:0,comments:0,liked:false,
+  }));
+  const api=actions({id:owner},async(sql,values)=>{
+    assert.match(sql,/\(w\.updated_at,w\.id,w\.account_id\)</);
+    assert.match(sql,/order by w\.updated_at desc,w\.id desc,w\.account_id desc limit 21/);
+    assert.equal(JSON.stringify(values.slice(2)),JSON.stringify([cursor.updatedAt,cursor.id,cursor.ownerId]));
+    return {rows};
+  });
+  const page=await api.getFeedWorkoutsPage({tab:"discover",cursor});
+  assert.equal(page.posts.length,20);
+  assert.equal(page.nextCursor?.id,rows[19].id);
+  assert.equal(page.nextCursor?.ownerId,other);
 });
 test("search literal wildcard characters are escaped and query injection remains parameterized",async()=>{
   const input="a%' OR 1=1 --";
