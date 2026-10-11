@@ -52,7 +52,7 @@ function DetailsDialog({ title, onClose, children }: { title: string; onClose: (
         <button ref={close} type="button" onClick={onClose} aria-label="Close details" className="admin-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"><X aria-hidden="true" size={19} /></button>
       </header>
       <div className="px-6 py-5">{children}</div>
-      <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-6 py-4"><p className="max-w-xs text-xs leading-5 text-slate-500">Changes require owner access and are recorded in the activity log.</p><button type="button" onClick={onClose} className="admin-button rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100">Close</button></footer>
+      <footer className="border-t border-slate-200 bg-slate-50 px-6 py-4"><p className="max-w-xs text-xs leading-5 text-slate-500">This view is read-only. User management actions are recorded in the audit log.</p></footer>
     </dialog>,
     document.body,
   );

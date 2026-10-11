@@ -10,6 +10,7 @@
 .icon { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border: 1px solid var(--feature-border); border-radius: 12px; background: color-mix(in srgb, var(--accent) 9%, var(--feature-card)); color: var(--accent); }
 .rows { display: grid; }
 .row { display: flex; min-height: 68px; align-items: center; justify-content: space-between; gap: 14px; border-bottom: 1px solid var(--feature-border); color: var(--feature-text); text-decoration: none; }
+.signedOutRow { display:flex; }
 .row:last-child { border-bottom: 0; }
 .row > span:first-child { display: grid; gap: 4px; }
 .row strong { font-size: 14px; font-weight: 560; }
@@ -35,5 +36,6 @@
 .loading { height: 150px; display: grid; place-items: center; }
 .loading span { width: 26px; height: 26px; border: 2px solid var(--feature-border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+@media (min-width:769px) { .signedOutRow { display:none; } }
 @media (max-width: 600px) { .shell { padding: 24px 16px 110px; } .group { padding: 17px 16px; } .row { min-height: 72px; } .row select { max-width: 125px; } }
 @media (prefers-reduced-motion: reduce) { .switch,.switch > span { transition: none; } .loading span { animation-duration: 2s; } }

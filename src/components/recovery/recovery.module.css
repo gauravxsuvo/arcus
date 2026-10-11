@@ -11,6 +11,7 @@
 :global(html[data-theme="light"]) .card,:global(html[data-theme="light"]) .dialog { --feature-card:#fff; --feature-text:#18181b; --feature-muted:#71717a; --feature-border:rgba(24,24,27,.12); --control:#f4f4f5; --background:#fff; --foreground:#18181b; }
 @media(max-width:540px) { .card { padding:16px; }.gauge { width:92px; height:92px; }.gaugeRow { gap:12px; }.dialog { padding:18px; border-radius:20px 20px 0 0; }.dialogBackdrop { padding:0; }.quality { grid-template-columns:1fr; }.quality button { text-align:left; padding-inline:14px; }.chart { gap:5px; }.trendAverage { max-width:112px; }.advisory { padding-left:12px; } }
 @media(prefers-reduced-motion:reduce) { .progress { transition:none; } }
+@media(min-width:769px) { .accountAction { display:none; } }
 @keyframes readinessPulse { 50% { opacity:.45; box-shadow:0 0 3px currentColor; } }
 .dot { animation:readinessPulse 2s ease-in-out infinite; }
 @media(prefers-reduced-motion:reduce) { .dot { animation:none; } }

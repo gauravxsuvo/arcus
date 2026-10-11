@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { BookmarkPlus, Check, Crown, LoaderCircle, X } from "lucide-react";
+import { BookmarkPlus, Check, Crown, LoaderCircle } from "lucide-react";
 import type { WorkoutRecord } from "@/features/workouts/model";
 import { saveWorkoutAsRoutine } from "@/features/routines/actions";
 import styles from "./save-routine-modal.module.css";
@@ -40,7 +40,7 @@ export function SaveRoutineModal({ workout, label = "Save as routine", className
     <button type="button" className={className ?? "outline-button"} onClick={open}><BookmarkPlus size={15}/>{label}</button>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby="save-routine-title">
       <form onSubmit={submit}>
-        <header><div><span className={styles.kicker}>YOUR TRAINING LIBRARY</span><h2 id="save-routine-title">Save as a routine</h2><p>{workout.exercises.length} exercises · future sessions start with your last logged numbers as hints.</p></div><button type="button" className={styles.close} aria-label="Close" onClick={() => dialog.current?.close()}><X size={18}/></button></header>
+        <header><div><span className={styles.kicker}>YOUR TRAINING LIBRARY</span><h2 id="save-routine-title">Save as a routine</h2><p>{workout.exercises.length} exercises · future sessions start with your last logged numbers as hints.</p></div></header>
         {proGate ? <div className={styles.proGate} role="status"><Crown size={21}/><p>Free plan is limited to 4 routines. Upgrade to ARCUS Pro for unlimited templates.</p><Link href="/pro" className={styles.primary} onClick={() => dialog.current?.close()}>Explore ARCUS Pro</Link></div> : saved ? <div className={styles.success} role="status"><Check size={18}/>{message}</div> : <>
           <label className={styles.field}>Routine name<input value={name} onChange={(event) => setName(event.target.value)} maxLength={100} required autoFocus/></label>
           <div className={styles.preview}>{workout.exercises.slice(0, 5).map((exercise) => <div key={exercise.id}><span>{exercise.name}</span><small>{exercise.sets.length} sets</small></div>)}{workout.exercises.length > 5 && <small>+{workout.exercises.length - 5} more</small>}</div>

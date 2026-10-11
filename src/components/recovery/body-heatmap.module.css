@@ -2,3 +2,4 @@
 
 @media(prefers-reduced-motion:reduce){.muscle{transition:none}.skeleton{animation:none}}
 :global(html[data-theme="light"]) .card { border-color:rgba(228,228,231,.9); box-shadow:0 2px 8px rgba(0,0,0,.03); }
+@media(min-width:769px){.accountAction{display:none}}

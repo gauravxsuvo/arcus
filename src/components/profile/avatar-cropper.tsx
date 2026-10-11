@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import Image from "next/image";
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 
 type Dimensions = { width: number; height: number };
 type Pan = { x: number; y: number };
@@ -154,7 +154,6 @@ export function AvatarCropper({ src, onCancel, onApply, onError }: AvatarCropper
       <section ref={dialogRef} className="avatar-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
         <header className="avatar-crop-header">
           <div><p className="social-kicker">PROFILE PHOTO</p><h2 id="avatar-crop-title">Crop your photo</h2></div>
-          <button type="button" className="avatar-crop-close" onClick={onCancel} aria-label="Cancel photo crop"><X size={19}/></button>
         </header>
         <p className="avatar-crop-help">Drag to position your photo, then use the slider to zoom.</p>
         <div

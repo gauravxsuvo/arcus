@@ -16,6 +16,7 @@
 .guestPrompt p { margin: 0; color: var(--feature-muted); font-size: 13px; line-height: 1.6; }
 .guestPrompt nav { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 12px; }
 .guestPrompt a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #3b82f6; font-size: 13px; font-weight: 600; }
+@media(min-width:769px) { .guestPrompt nav { display:none; } }
 @media(max-width: 768px) {
   .profileCard { padding:18px; }
   .header { padding-top: 0; }

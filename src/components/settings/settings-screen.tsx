@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Check, ChevronRight, Database, Dumbbell, ShieldCheck } from "lucide-react";
-import { ThemeToggle } from "@/components/shared/theme-provider";
 import { useProfile } from "@/components/shared/user-profile-provider";
 import { readTimerAudioEnabled, writeTimerAudioEnabled } from "@/lib/gym-audio";
 import { readLockScreenCompanionEnabled, writeLockScreenCompanionEnabled } from "@/lib/lockscreen-companion";
@@ -100,7 +99,7 @@ export function SettingsScreen() {
       <section className={`feature-panel ${styles.group}`} aria-labelledby="account-title">
         <div className={styles.groupTitle}><span className={styles.icon}><ShieldCheck size={19} /></span><div><h2 id="account-title">Account</h2><p>Profile and account protection</p></div></div>
         <div className={styles.rows}>
-          <Link className={styles.row} href={user ? "/profile/edit" : "/login?next=%2Fsettings"}><span><strong>{user ? user.name || `@${user.username}` : "Sign in to ARCUS"}</strong><small>{user ? user.email : "Sync your training across devices"}</small></span><ChevronRight size={18} /></Link>
+          <Link className={`${styles.row} ${!user ? styles.signedOutRow : ""}`} href={user ? "/profile/edit" : "/login?next=%2Fsettings"}><span><strong>{user ? user.name || `@${user.username}` : "Sign in to ARCUS"}</strong><small>{user ? user.email : "Sync your training across devices"}</small></span><ChevronRight size={18} /></Link>
           <Link className={styles.row} href="/settings/security"><span><strong>Security & privacy</strong><small>Passkeys and two-factor authentication</small></span><ChevronRight size={18} /></Link>
           <div className={styles.sync}><span className={user?.syncStatus === "error" ? styles.syncError : styles.syncDot} />{syncLabel}</div>
         </div>
@@ -113,12 +112,6 @@ export function SettingsScreen() {
           <label className={styles.row} htmlFor="settings-rest"><span><strong>Default rest timer</strong><small>Used for exercises without a custom rest time</small></span><span className={styles.restInput}><input id="settings-rest" type="number" inputMode="numeric" min={0} max={1800} step={15} value={restDraft} disabled={saving} onChange={event => setRestDraft(event.target.value)} onBlur={() => { const parsed = Number(restDraft); const value = Number.isFinite(parsed) ? Math.min(1800, Math.max(0, Math.round(parsed))) : preferences.defaultRestTimer; setRestDraft(String(value)); if (value !== preferences.defaultRestTimer) void updatePreferences({ ...preferences, defaultRestTimer: value }); }} /><small>sec</small></span></label>
           <div className={styles.row}><span><strong>Lock Screen Companion</strong><small>Show your workout timer in supported lock screen media controls</small></span><button className={styles.switch} role="switch" aria-checked={lockScreenEnabled} aria-label="Lock Screen Companion (Show timer on phone lock screen)" onClick={toggleLockScreenCompanion}><span /></button></div>
         </div>
-      </section>
-
-      <section className={`feature-panel ${styles.group}`} aria-labelledby="appearance-title">
-        <div className={styles.groupTitle}><span className={styles.icon}><span aria-hidden="true">◐</span></span><div><h2 id="appearance-title">Appearance</h2><p>Adjust how ARCUS looks on this device</p></div></div>
-        <div className={styles.row}><span><strong>Color theme</strong><small>{preferences.theme === "dark" ? "Dark theme" : "Light theme"}</small></span><ThemeToggle /></div>
-        <p className={styles.helper}>Theme changes apply across the app and are saved with your preferences.</p>
       </section>
 
       <section className={`feature-panel ${styles.group}`} aria-labelledby="alerts-title">

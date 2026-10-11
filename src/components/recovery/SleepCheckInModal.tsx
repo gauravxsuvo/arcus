@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Moon, X } from "lucide-react";
+import { Check, Moon } from "lucide-react";
 import { ReadinessWidget, type SleepLogView } from "./ReadinessWidget";
 import dynamic from "next/dynamic";
 import { calculateReadiness, localDateKey } from "@/features/recovery/readiness-engine";
@@ -102,7 +102,7 @@ export function SleepCheckInModal({ showTrend = true }: { showTrend?: boolean })
     {data?.today && <ReadinessWidget log={data.today} recommendation={data.today.readinessScore >= 80 ? "Prime recovery. Train with confidence and keep good form." : data.today.readinessScore >= 60 ? "A steady day. Match the session to how you feel." : "Consider a lighter session and pay attention to fatigue."}/>}
     {showTrend && loaded && !signedOut && <SleepTrendCard initialLogs={data?.logs ?? []}/>}
     {open && <div className={styles.dialogBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !busy) setOpen(false); }}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="sleep-dialog-title">
-      <div className={styles.dialogHead}><div><p className={styles.kicker}>MORNING CHECK-IN</p><h2 id="sleep-dialog-title">How was your sleep?</h2><p>Saved privately to your ARCUS account.</p></div><button className={styles.iconButton} type="button" aria-label="Close sleep check-in" onClick={() => setOpen(false)}><X size={18}/></button></div>
+      <div className={styles.dialogHead}><div><p className={styles.kicker}>MORNING CHECK-IN</p><h2 id="sleep-dialog-title">How was your sleep?</h2><p>Saved privately to your ARCUS account.</p></div></div>
       <form className={styles.form} onSubmit={event => void submit(event)}>
         <div className={styles.timeGrid}><label className={styles.field}>Bedtime<input type="datetime-local" value={bedtime} onChange={event => setBedtime(event.target.value)} required/></label><label className={styles.field}>Wake time<input type="datetime-local" value={wakeTime} onChange={event => setWakeTime(event.target.value)} required/></label></div>
         <p className={styles.duration}>⚡ {duration > 0 ? `${Math.floor(duration / 60)} hrs ${String(duration % 60).padStart(2,"0")} mins of sleep` : "Choose a wake time after bedtime"}</p>
