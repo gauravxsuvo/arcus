@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   distDir: process.env.ARCUS_DIST_DIR || ".next",
   serverExternalPackages: ["@neondatabase/serverless", "ws"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "date-fns", "framer-motion"],
+  },
+  images: { formats: ["image/avif", "image/webp"] },
+  compiler: { removeConsole: process.env.NODE_ENV === "production" },
   async headers() {
     const privateHeaders = [
       { key: "Cache-Control", value: "private, no-store, max-age=0" },
@@ -15,6 +20,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/admin/:path*", headers: privateHeaders },
       { source: "/api/admin/:path*", headers: privateHeaders },
+      { source: "/home", headers: [{ key:"Cache-Control",value:"private, no-store, max-age=0" }] },
+      { source: "/api/social/:path*", headers: [{ key:"Cache-Control",value:"private, no-store, max-age=0" }] },
     ];
   },
 };

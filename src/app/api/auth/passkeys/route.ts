@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { deletePasskey, listPasskeys } from "@/lib/auth/passkeys";
 import { getCurrentAccountFromRequest } from "@/lib/auth/server";
+import { z } from "zod";
+import { readProfileBody } from "@/lib/auth/avatar";
 
 export const runtime = "nodejs";
 
@@ -18,8 +20,9 @@ export async function DELETE(request: Request) {
   try {
     const account = await getCurrentAccountFromRequest(request);
     if (!account) return NextResponse.json({ error: "Sign in before managing passkeys." }, { status: 401 });
-    const body = await request.json() as { id?: unknown };
-    const id = typeof body.id === "string" ? body.id : "";
+    const parsed = z.object({ id:z.string().uuid() }).safeParse(await readProfileBody(request));
+    if (!parsed.success) return NextResponse.json({ error:"Choose a valid passkey." },{ status:400 });
+    const { id } = parsed.data;
     if (!/^[0-9a-f-]{36}$/i.test(id)) return NextResponse.json({ error: "Choose a valid passkey." }, { status: 400 });
     if (!await deletePasskey(account.id, id)) return NextResponse.json({ error: "That passkey could not be found." }, { status: 404 });
     return NextResponse.json({ removed: true });

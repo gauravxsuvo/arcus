@@ -30,6 +30,13 @@ test("workout totals include only completed sets", () => {
   assert.deepEqual(calculateWorkoutTotals(session), { sets: 2, reps: 15, volume: 1050, durationSeconds: 4020 });
 });
 
+test("warm-up sets are tagged but excluded from working-set totals and volume", () => {
+  const tagged = structuredClone(session);
+  tagged.exercises[0].sets.unshift({ id: "warmup", index: 0, weight: 120, reps: 5, completed: true, completedAt: null, setType: "warmup" });
+  tagged.exercises[0].sets.push({ id: "drop", index: 4, weight: 50, reps: 12, completed: true, completedAt: null, setType: "drop" });
+  assert.deepEqual(calculateWorkoutTotals(tagged), { sets: 3, reps: 27, volume: 1650, durationSeconds: 4020 });
+});
+
 test("workout volume is zero when completed sets have no load or reps", () => {
   const emptyLoad = structuredClone(session);
   emptyLoad.exercises[0].sets[0] = { ...emptyLoad.exercises[0].sets[0], weight: null, reps: null };

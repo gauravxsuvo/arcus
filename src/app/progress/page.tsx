@@ -18,6 +18,8 @@ import { useProfile } from "@/components/shared/user-profile-provider";
 import { formatWeight,formatLoadReason,fromDisplayWeight,toDisplayWeight,weightUnit } from "@/features/training/logic";
 import { muscleRecovery } from "@/features/training/muscle-recovery";
 import { LineChart } from "@/components/progress/line-chart";
+const SleepTrendCard=dynamic(()=>import("@/components/recovery/SleepTrendCard").then(module=>module.SleepTrendCard),{ssr:false,loading:()=> <div className="analytics-panel" aria-hidden="true" style={{minHeight:260}}/>});
+const WeightTrendChart=dynamic(()=>import("@/components/weight/WeightTrendChart").then(module=>module.WeightTrendChart),{ssr:false,loading:()=> <div className="analytics-panel" aria-hidden="true" style={{minHeight:280}}/>});
 const ProgressCharts=dynamic(()=>import("@/components/progress/progress-charts"),{ssr:false,loading:()=> <div className="loading-block" role="status">Preparing your charts…</div>});
 const AdvancedAnalytics=dynamic(()=>import("@/components/progress/advanced-analytics"),{ssr:false});
 
@@ -92,6 +94,8 @@ export default function ProgressPage() {
     <section className="history-heading"><p className="eyebrow"><span className="live-dot"/> PERFORMANCE & PHYSIQUE</p><h1>Progress<span>.</span></h1><p>Trends and training records calculated from your completed sessions.</p></section>
     {!ready ? <div className="loading-block">Loading your training data…</div> : <>
       <section className="progress-stats"><article><span>SESSIONS</span><strong>{workouts.length}</strong><small>completed workouts</small></article><article><span>12 WEEK VOLUME</span><strong>{formatWeight(totalVolume,units)}</strong><small>total lifted</small></article><article><span>BEST EST. 1RM</span><strong>{bestE1rm ? formatWeight(bestE1rm,units) : "—"}</strong><small>{oneRepMaxMethod === "epley" ? "Epley" : "Brzycki"} estimate</small></article><article><span>PERSONAL RECORDS</span><strong>{prs.length}</strong><small>estimated 1RM milestones</small></article></section>
+      <SleepTrendCard standalone/>
+      <WeightTrendChart units={units}/>
       <section className="analytics-toolbar"><div><p className="eyebrow">STRENGTH MODEL</p><strong>Choose your 1RM estimate</strong><small>Use the same method over time for a consistent trend.</small></div><label>FORMULA<select value={oneRepMaxMethod} onChange={(event) => setOneRepMaxMethod(event.target.value as OneRepMaxMethod)}><option value="epley">Epley</option><option value="brzycki">Brzycki</option></select></label></section>
       <ProgressCharts workouts={workouts} method={oneRepMaxMethod}/>
       <AdvancedAnalytics workouts={workouts} entries={entries}/>

@@ -1,5 +1,6 @@
 import { isCardioExercise, type WorkoutExercise, type WorkoutRecord } from "../workouts/model.ts";
 import type { ProgressionRule, TrainingGoal, UserProfile, Units } from "../profile/model.ts";
+import { calculatePlates as calculatePlateBreakdown } from "../../lib/plate-calculator.ts";
 
 export const KG_PER_LB = 0.45359237;
 export const weightUnit = (units: Units) => units === "imperial" ? "lb" : "kg";
@@ -96,9 +97,9 @@ export function oneRepMaxes(weight: number, reps: number) {
   const lombardi = weight * Math.pow(reps, .1);
   return { epley, brzycki, lombardi, average: (epley + brzycki + lombardi) / 3 };
 }
+/** Compatibility adapter for existing training tools; the canonical algorithm lives in lib/plate-calculator. */
 export function calculatePlates(target: number, bar: number, units: Units) {
-  const sizes = units === "metric" ? [25,20,15,10,5,2.5,1.25] : [45,35,25,10,5,2.5];
-  let remaining = Math.max(0, (target - bar) / 2); const plates: number[] = [];
-  for (const size of sizes) while (remaining + .000001 >= size && plates.length < 40) { plates.push(size); remaining -= size; }
-  return { plates, achieved: bar + plates.reduce((sum,v) => sum + v,0) * 2, remainder: Math.max(0, remaining * 2) };
+  const result = calculatePlateBreakdown(target, bar, units === "metric" ? "kg" : "lbs");
+  const plates = result.platesPerSide.flatMap(({ weight, count }) => Array.from({ length: count }, () => weight));
+  return { plates, achieved: result.achievableWeight, remainder: Math.max(0, target - result.achievableWeight) };
 }

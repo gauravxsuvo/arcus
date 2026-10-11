@@ -4,9 +4,9 @@ import { ACTIVE_DRAFT_KEY, readActiveDraft, writeActiveDraft, clearActiveDraft, 
 import { createWorkout } from "../src/features/workouts/model.ts";
 
 function storage() { const items = new Map(); return { getItem:key=>items.get(key)??null, setItem:(key,value)=>items.set(key,value), removeItem:key=>items.delete(key) }; }
-function workout(id="draft-one",updatedAt="2026-10-08T05:15:00.000Z") { return {...createWorkout(),id,updatedAt,notes:"Latest edit",restUntil:"2026-10-08T05:17:00.000Z",exercises:[{id:"bench",exerciseId:"bench",name:"Bench",muscle:"Chest",equipment:"Barbell",restSeconds:90,sets:[{id:"s1",index:0,weight:72.5,reps:8,rpe:null,completed:false,completedAt:null}]}]}; }
+function workout(id="draft-one",updatedAt="2026-10-08T05:15:00.000Z") { return {...createWorkout(),id,updatedAt,notes:"Latest edit",restUntil:"2026-10-08T05:17:00.000Z",exercises:[{id:"bench",exerciseId:"bench",name:"Bench",muscle:"Chest",equipment:"Barbell",restSeconds:90,sets:[{id:"s1",index:0,weight:72.5,reps:8,rpe:null,completed:false,completedAt:null,setType:"drop",previousWeight:70,previousReps:9}]}]}; }
 
-test("active draft writes synchronously and preserves fractional sets and rest time", () => {
+test("active draft writes synchronously and preserves measurements, set tags and rest time", () => {
   const store=storage(),draft=workout();
   assert.equal(writeActiveDraft(draft,store),true);
   assert.deepEqual(readActiveDraft(store),draft);
@@ -20,6 +20,13 @@ test("malformed, unsupported, oversized and completed backups are ignored", () =
     store.setItem(ACTIVE_DRAFT_KEY,text); assert.equal(readActiveDraft(store),null);
   }
   assert.equal(writeActiveDraft({...workout(),status:"completed"},store),false);
+});
+test("uses the documented recovery key and ignores sessions older than 18 hours", () => {
+  const store=storage(), stale={...workout(),startedAt:new Date(Date.now()-19*60*60*1000).toISOString()};
+  assert.equal(ACTIVE_DRAFT_KEY,"arcus_active_workout_draft");
+  writeActiveDraft(stale,store);
+  assert.equal(readActiveDraft(store),null);
+  assert.equal(store.getItem(ACTIVE_DRAFT_KEY),null);
 });
 test("quota and denied-storage failures never prevent the primary IndexedDB save", () => {
   const store={getItem(){throw Error("Blocked");},setItem(){throw Error("Quota");},removeItem(){throw Error("Blocked");}};

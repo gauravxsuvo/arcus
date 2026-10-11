@@ -22,9 +22,10 @@ async function requestServerAuth(path: string, body: Record<string, string>) {
   } catch {
     throw new Error("offline");
   }
-  const payload = await response.json().catch(() => ({})) as { user?: Omit<LocalUser, "passwordHash" | "createdAt">; error?: string };
+  const payload = await response.json().catch(() => ({})) as { user?: Omit<LocalUser, "passwordHash" | "createdAt">; error?: string; mfaRequired?: boolean };
+  if (response.status === 202 && payload.mfaRequired) return { mfaRequired: true as const };
   if (!response.ok || !payload.user) throw new ServerAuthError(payload.error ?? "Could not complete account request.", response.status);
-  return payload.user;
+  return { user: payload.user };
 }
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
@@ -47,8 +48,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     try {
       if (signup) {
         try {
-          const user = await requestServerAuth("/api/auth/signup", { username, email, password, name });
-          await cacheRemoteUser(user, password);
+          const result = await requestServerAuth("/api/auth/signup", { username, email, password, name });
+          if ("mfaRequired" in result) throw new Error("Unexpected verification challenge during account creation.");
+          await cacheRemoteUser(result.user, password);
           await restoreWorkouts().catch(()=>undefined);
           await restoreLibrary().catch(()=>undefined);
         } catch (reason) {
@@ -59,8 +61,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         router.push("/onboarding");
       } else {
         try {
-          const user = await requestServerAuth("/api/auth/login", { username, password });
-          await cacheRemoteUser(user, password);
+          const result = await requestServerAuth("/api/auth/login", { username, password });
+          if ("mfaRequired" in result) { router.push("/auth/verify-mfa"); return; }
+          await cacheRemoteUser(result.user, password);
           await restoreWorkouts().catch(()=>undefined);
           await restoreLibrary().catch(()=>undefined);
         } catch (reason) {
@@ -89,7 +92,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       if (!optionsResponse.ok || !optionsBody.options || !optionsBody.challengeId) throw new Error(optionsBody.error ?? "Could not start passkey sign-in.");
       const credential = await startAuthentication({ optionsJSON: optionsBody.options });
       const verifyResponse = await fetch("/api/auth/passkeys/login/verify", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ challengeId: optionsBody.challengeId, response: credential }) });
-      const result = await verifyResponse.json().catch(() => ({})) as { user?: Omit<LocalUser, "passwordHash" | "createdAt">; error?: string };
+      const result = await verifyResponse.json().catch(() => ({})) as { user?: Omit<LocalUser, "passwordHash" | "createdAt">; error?: string; mfaRequired?: boolean };
+      if (verifyResponse.status === 202 && result.mfaRequired) { router.push("/auth/verify-mfa"); return; }
       if (!verifyResponse.ok || !result.user) throw new Error(result.error ?? "Passkey sign-in failed.");
       await cacheRemoteUser(result.user, crypto.randomUUID());
       await restoreWorkouts().catch(() => undefined); await restoreLibrary().catch(() => undefined);
@@ -103,6 +107,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <section className="auth-card"><p className="eyebrow"><span className="live-dot" /> {signup ? "START YOUR TRAINING SPACE" : "WELCOME BACK"}</p><h1>{signup ? <>Make room<br/><span>for progress.</span></> : <>Good to<br/><span>see you.</span></>}</h1><p className="auth-intro">{signup ? "Create an account and keep your training data safely on this device." : "Sign in to your training space."}</p>
       <form ref={authFormRef} className="auth-form" onSubmit={(event) => void handleSubmit(event)}>{signup && <label>Username<input name="username" type="text" autoComplete="username" minLength={3} maxLength={32} pattern="[A-Za-z0-9_]+" required /></label>}{signup && <label>Email for account recovery<input name="email" type="email" autoComplete="email" required /></label>}{signup && <label>Your name<input name="name" type="text" autoComplete="name" maxLength={80} required /></label>}{!signup && <label>Username or Email<input name="username" type="text" autoComplete="username" minLength={3} maxLength={255} required /></label>}<label><div style={{ display:"flex", justifyContent:"space-between" }}><span>Password</span>{!signup && <Link href="/forgot-password" style={{ color:"#a1a1aa", fontSize:"13px" }}>Forgot password?</Link>}</div><input name="password" type="password" minLength={8} autoComplete={signup ? "new-password" : "current-password"} required /></label><button className="action-button auth-submit" disabled={busy}>{busy ? "Working…" : signup ? "Create account" : "Sign in"}<ArrowRight size={16}/></button></form>
       {!signup && <button className="outline-button auth-passkey" type="button" disabled={busy} onClick={() => void handlePasskeyLogin()}><Fingerprint size={17}/> Sign in with a passkey</button>}
+      {!signup && <p className="auth-switch"><Link href="/auth/forgot-password">Forgot password?</Link></p>}
       {error && <p role="alert" className="auth-error">{error}</p>}{notice && <p role="status" className="auth-notice">{notice}</p>}
       <p className="auth-switch">{signup ? "Already have an account?" : "New to ARCUS?"} <Link href={signup ? "/login" : "/signup"}>{signup ? "Sign in" : "Create account"}</Link></p>
     </section></main>;

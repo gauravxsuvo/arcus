@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, CalendarDays, Dumbbell, History, House, Library, Sparkles, User } from "lucide-react";
+import { Activity, CalendarDays, Dumbbell, History, House, Library, ListChecks, Sparkles, User } from "lucide-react";
 import { AccountAccess } from "@/components/shared/account-access";
 import { ArcusMark } from "@/components/shared/arcus-mark";
 import { Avatar } from "./avatar";
@@ -17,6 +17,7 @@ const destinations = [
 ];
 const secondary = [
   { href: "/programs", label: "Programs", icon: CalendarDays },
+  { href: "/routines", label: "Routines", icon: ListChecks },
   { href: "/progress", label: "Progress", icon: Activity },
   { href: "/exercises", label: "Exercises", icon: Library },
   { href: "/recaps", label: "Weekly recaps", icon: CalendarDays },
@@ -42,7 +43,7 @@ export function MobileNavigation() {
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   if (!hasAppNavigation(pathname)) return null;
 
-  const profileSection = ["/profile", "/programs", "/progress", "/exercises", "/recaps", "/pro"].some(isActive);
+  const profileSection = ["/profile", "/programs", "/routines", "/progress", "/exercises", "/recaps", "/pro"].some(isActive);
 
   return <><nav className={`desktop-navigation ${styles.desktop}`} aria-label="Main navigation">
     <Link className="brand" href="/home"><ArcusMark />ARCUS.</Link>

@@ -93,3 +93,4 @@
 }
 @media(max-width:360px) { .page:global(.social-shell) { --dashboard-gutter:16px; }.headerActions { gap:4px; }.hero { padding:17px; }.hero h2 { font-size:25px; }.metrics { gap:7px; }.metric { padding:12px 9px; }.metric strong { font-size:21px; }.account>p { font-size:10px; }.account>a { min-width:58px; padding:0 7px; } }
 @media(prefers-reduced-motion:reduce) { .primary,.metric { transition:none; } }
+.heroLinks{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px}

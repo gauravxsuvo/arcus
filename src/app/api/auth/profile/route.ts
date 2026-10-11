@@ -3,6 +3,14 @@ import { getCurrentAccountAvatarObjectKey, getCurrentAccountFromRequest, isUniqu
 import { parseAvatar, ProfileInputError, readProfileBody } from "@/lib/auth/avatar";
 import { deleteProfileAvatar, putProfileAvatar } from "@/lib/storage/portways-s3";
 import { profileDetailsSchema } from "@/features/profile/schema";
+import { z } from "zod";
+const profileInput = z.object({
+  username:z.string().trim().regex(/^[A-Za-z0-9_]{3,32}$/).optional(),
+  name:z.string().trim().min(1).max(80).optional(),bio:z.string().trim().max(160).nullable().optional(),
+  experience:z.string().max(100).nullable().optional(),goals:z.array(z.string().max(100)).max(20).optional(),
+  height_cm:z.number().positive().max(300).nullable().optional(),
+  profileData:profileDetailsSchema.optional(),avatarUrl:z.string().max(750000).nullable().optional(),
+});
 
 export const runtime = "nodejs";
 
@@ -10,7 +18,9 @@ export async function PUT(request: Request) {
   try {
     const account = await getCurrentAccountFromRequest(request);
     if (!account) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
-    const body = await readProfileBody(request);
+    const parsed = profileInput.safeParse(await readProfileBody(request));
+    if (!parsed.success) return NextResponse.json({ error:parsed.error.issues[0]?.message ?? "Invalid profile." },{ status:400 });
+    const body = parsed.data;
     const avatar = parseAvatar(body.avatarUrl);
     const details = body.profileData === undefined ? undefined : profileDetailsSchema.safeParse(body.profileData);
     if(details && !details.success) return NextResponse.json({error:details.error.issues[0]?.message ?? "Invalid profile settings."},{status:400});
@@ -18,7 +28,7 @@ export async function PUT(request: Request) {
     if (username !== undefined && !/^[A-Za-z0-9_]{3,32}$/.test(username)) return NextResponse.json({ error: "Use 3–32 letters, numbers, or underscores for your username." }, { status: 400 });
     const bio = typeof body.bio === "string" ? body.bio.trim().slice(0, 160) : null;
     const goals = Array.isArray(body.goals) ? body.goals.filter((item): item is string => typeof item === "string").slice(0, 20) : [];
-    const height = body.height_cm === null || body.height_cm === undefined || body.height_cm === "" ? null : Number(body.height_cm);
+    const height = body.height_cm ?? null;
     const oldAvatarKey = avatar === undefined ? null : await getCurrentAccountAvatarObjectKey(account.id);
     const avatarObjectKey = avatar === undefined ? undefined : avatar ? await putProfileAvatar(account.id, avatar) : null;
     let user;

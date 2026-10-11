@@ -1,4 +1,4 @@
-const CACHE_NAME = "arcus-shell-v14";
+const CACHE_NAME = "arcus-shell-v15";
 const APP_ROUTES = ["/", "/welcome", "/login", "/signup", "/dashboard", "/workout", "/history", "/exercises", "/programs", "/progress", "/profile", "/profile/data", "/profile/edit", "/recaps", "/exercises/barbell-bench-press", "/history/offline", "/programs/offline", "/workout/complete/offline", "/sounds/timer-done.wav", "/demos/placeholder.svg", "/manifest.webmanifest", "/icon.svg", "/arcus-mark.svg", "/arcus-moon-logo.png", "/icons/brand-64.png", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/maskable-512.png", "/icons/apple-touch-icon.png", "/offline.html"];
 
 self.addEventListener("install", (event) => {
@@ -38,6 +38,8 @@ self.addEventListener("fetch", (event) => {
   // server request. Never keep administrative snapshots in the offline shell.
   if (url.pathname === "/admin" || url.pathname.startsWith("/admin/") || url.pathname.startsWith("/api/admin/")) return;
   if (url.pathname === "/api/runtime-flags") return;
+  // Viewer-specific feed snapshots must never survive an account switch.
+  if (url.pathname === "/home" || url.pathname.startsWith("/api/social/")) return;
 
   // Passkey challenges and credential management are always server-only.
   if (url.pathname === "/api/auth/passkeys" || url.pathname.startsWith("/api/auth/passkeys/")) return;

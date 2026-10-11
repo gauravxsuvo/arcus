@@ -1,4 +1,12 @@
+import { z } from "zod";
 export const MAX_AVATAR_BYTES = 512 * 1024;
+
+// Recursively validate all JSON strings, including nested sync records. Reject
+// HTML instead of storing it; React text rendering remains the output boundary.
+export const plainJsonSchema: z.ZodType<unknown> = z.lazy(() => z.union([
+  z.string().refine(value => !/[<>]/.test(value), "HTML is not allowed in text fields."),
+  z.number(), z.boolean(), z.null(), z.array(plainJsonSchema), z.record(z.string(), plainJsonSchema),
+]));
 export const MAX_PROFILE_BODY_BYTES = Math.ceil(MAX_AVATAR_BYTES / 3) * 4 + 256 * 1024;
 
 export type AvatarImage = { bytes: Buffer; mimeType: string };
@@ -68,5 +76,8 @@ export async function readProfileBody(request: Request): Promise<Record<string, 
     throw new ProfileInputError("Profile data must be valid JSON.");
   }
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new ProfileInputError("Profile data must be an object.");
+  const textFields = Object.fromEntries(Object.entries(body).filter(([key]) => key !== "password"));
+  // Passwords are opaque credentials, never HTML or displayed profile text.
+  if (!plainJsonSchema.safeParse(textFields).success) throw new ProfileInputError("HTML is not allowed in text fields.");
   return body as Record<string, unknown>;
 }

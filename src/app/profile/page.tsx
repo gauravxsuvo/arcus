@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Activity, ArrowRight, Award, BarChart3, CalendarDays, Check, Clock3, Cloud, CloudOff, Database, Dumbbell, LogOut, Pencil, Scale, Settings2, TriangleAlert } from "lucide-react";
+import { Activity, ArrowRight, Award, BarChart3, CalendarDays, Check, Clock3, Cloud, CloudOff, Database, Dumbbell, LogOut, Pencil, Scale, Settings2, ShieldCheck, TriangleAlert } from "lucide-react";
 import { findPersonalRecords } from "@/features/analytics/engine";
 import { getLocalSession, logoutLocalUser } from "@/features/local-data/repository";
 import { calculateWorkoutTotals, type WorkoutRecord } from "@/features/workouts/model";
@@ -14,8 +14,11 @@ import styles from "./profile.module.css";
 import { useProfile } from "@/components/shared/user-profile-provider";
 import { formatWeight,toDisplayWeight,weightUnit } from "@/features/training/logic";
 import { PasskeySettings } from "@/components/profile/passkey-settings";
+import { WorkoutActivitySummary } from "@/components/profile/WorkoutActivitySummary";
+import { SleepCheckInModal } from "@/components/recovery/SleepCheckInModal";
+import { BodyHeatmap } from "@/components/recovery/BodyHeatmap";
 
-type Profile = { display_name: string | null; experience: string | null; goals: string[]; height_cm: number | null; bio?: string | null; avatarUrl?: string | null; username: string };
+type Profile = { id: string; display_name: string | null; experience: string | null; goals: string[]; height_cm: number | null; bio?: string | null; avatarUrl?: string | null; username: string };
 type WeekProgress = { label: string; hours: number; volume: number; sessions: number; start: number };
 type ChartMetric = "duration" | "volume" | "sessions";
 type ProfileWarning = { id: string; message: string; actor_email: string; created_at: string };
@@ -74,7 +77,7 @@ export default function ProfilePage() {
     else if (saved === "device") setSaveNotice({ text: query.get("sync") === "unavailable" ? "Saved on this device. Your changes are queued for account sync." : "Saved on this device. Sign in to the live server to sync across devices.", local: true });
     void Promise.all([getLocalSession(), getCompletedWorkouts()]).then(([user, sessions]) => {
       if (cancelled) return;
-      if (user) setProfile({ display_name: user.name, username: user.username, ...user.profile });
+      if (user) setProfile({ id: user.id, display_name: user.name, username: user.username, ...user.profile });
       setWorkouts(sessions);
       setReady(true);
     }).catch((reason: unknown) => {
@@ -139,6 +142,12 @@ export default function ProfilePage() {
 
       <GoalSummary workouts={workouts}/>
 
+      <WorkoutActivitySummary userId={profile?.id} workouts={workouts} units={units}/>
+
+      <SleepCheckInModal showTrend={false}/>
+
+      <BodyHeatmap/>
+
       <section className="profile-chart-card">
         <div className="profile-chart-heading"><div><p className="social-kicker">YOUR PROGRESS</p><h2>{chartValueLabel} <span>this week</span></h2></div><label className="range-picker"><span className="visually-hidden">Chart range</span><select aria-label="Chart range" value={range} onChange={(event) => setRange(Number(event.target.value) as 12 | 26)}><option value={12}>Last 3 months</option><option value={26}>Last 6 months</option></select></label></div>
         <div className="profile-chart-controls" role="group" aria-label="Choose progress chart">
@@ -153,7 +162,7 @@ export default function ProfilePage() {
         {hasChartData && <div className="chart-legend"><span><i/> {chartCaption}</span><span>{chartUnit}</span></div>}
       </section>
 
-      <section className="profile-shortcuts"><h2>Dashboard</h2><div className="profile-shortcut-grid"><Link href="/progress"><BarChart3 size={21}/><span>Statistics</span><ArrowRight size={15}/></Link><Link href="/exercises"><Dumbbell size={21}/><span>Exercises</span><ArrowRight size={15}/></Link><Link href="/programs"><CalendarDays size={21}/><span>Plans</span><ArrowRight size={15}/></Link><Link href="/profile/data"><Database size={21}/><span>Data & import</span><ArrowRight size={15}/></Link></div></section>
+      <section className="profile-shortcuts"><h2>Dashboard</h2><div className="profile-shortcut-grid"><Link href="/progress"><BarChart3 size={21}/><span>Statistics</span><ArrowRight size={15}/></Link><Link href="/exercises"><Dumbbell size={21}/><span>Exercises</span><ArrowRight size={15}/></Link><Link href="/programs"><CalendarDays size={21}/><span>Plans</span><ArrowRight size={15}/></Link><Link href="/profile/data"><Database size={21}/><span>Data & import</span><ArrowRight size={15}/></Link>{profile && <Link href="/settings/security"><ShieldCheck size={21}/><span>Account security</span><ArrowRight size={15}/></Link>}</div></section>
 
       <section className="profile-workouts"><div className="activity-heading"><div><p className="social-kicker">YOUR TRAINING LOG</p><h2>Workouts</h2></div><Link href="/history">See all <ArrowRight size={15}/></Link></div>{workouts.length === 0 ? <div className="social-empty"><span className="social-empty-icon"><Activity size={21}/></span><p>Completed workouts will appear here.</p><Link href="/workout">Start a workout <ArrowRight size={15}/></Link></div> : workouts.slice(0, 5).map((workout) => <Link className="profile-workout-row" href={`/history/${workout.id}`} key={workout.id}><span className="profile-workout-icon"><Dumbbell size={18}/></span><span><strong>{workout.name?.toLocaleLowerCase() === "imported workout" ? "Workout" : workout.name || "Workout"}</strong><small>{new Date(workout.completedAt ?? workout.startedAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · {workout.exercises.length} exercises</small></span><span className="profile-row-volume">{formatWeight(calculateWorkoutTotals(workout).volume,units,0)}{recordsByWorkout.get(workout.id) ? <small><Award size={13} fill="currentColor"/>{recordsByWorkout.get(workout.id)}</small> : null}</span><ArrowRight size={15}/></Link>)}
       </section>

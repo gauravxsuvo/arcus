@@ -4,6 +4,7 @@ import { clearActiveDraft, readActiveDraft, selectActiveDraft, writeActiveDraft 
 const DATABASE = "ARCUS-training";
 const VERSION = 1;
 const STORE = "workouts";
+const MAX_ACTIVE_AGE_MS = 18 * 60 * 60 * 1000;
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -72,7 +73,9 @@ export async function saveWorkouts(workouts: WorkoutRecord[]): Promise<void> {
 export async function getActiveWorkout(): Promise<WorkoutRecord | null> {
   const backup = readActiveDraft();
   const rows = await transact<WorkoutRecord[]>("readonly", (store) => store.index("status").getAll("active"));
-  const active = rows.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
+  const now = Date.now();
+  const active = rows.filter(row => Number.isFinite(Date.parse(row.startedAt)) && now - Date.parse(row.startedAt) <= MAX_ACTIVE_AGE_MS)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
   if (!backup) { if (active) writeActiveDraft(active); return active; }
   const persistedBackup = rows.find(row => row.id === backup.id) ?? await getWorkoutById(backup.id);
   const recovered = selectActiveDraft(active, backup, persistedBackup);

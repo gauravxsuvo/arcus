@@ -11,6 +11,11 @@ import { TodayOverview } from "@/components/dashboard/today-overview";
 import { QuickStart } from "@/components/dashboard/quick-start";
 import { Avatar } from "@/components/shared/avatar";
 import { ArcusMark } from "@/components/shared/arcus-mark";
+import { WorkoutActivitySummary } from "@/components/profile/WorkoutActivitySummary";
+import { ResumeWorkoutBanner } from "@/components/workout/ResumeWorkoutBanner";
+import { SleepCheckInModal } from "@/components/recovery/SleepCheckInModal";
+import { BodyHeatmap } from "@/components/recovery/BodyHeatmap";
+import { QuickWeightModal } from "@/components/weight/QuickWeightModal";
 import { useProfile } from "@/components/shared/user-profile-provider";
 import { weekStartDate, detectRecords, toDisplayWeight, weightUnit } from "@/features/training/logic";
 import styles from "./dashboard.module.css";
@@ -63,13 +68,15 @@ export default function DashboardPage() {
       <div className={styles.headerActions}><Link className={styles.search} href="/exercises" aria-label="Search exercises"><Search size={21}/></Link><Link className={styles.avatar} href="/profile" aria-label="Open your profile"><Avatar size={44}/></Link></div>
     </header>
     <AccountAccess className={styles.account} description="Keep your progress backed up."/>
+    <ResumeWorkoutBanner activeWorkout={active} onDiscard={() => setActive(null)} />
+    <SleepCheckInModal showTrend/>
     {error && <div className={styles.error} role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Try again</button></div>}
     <section className={styles.hero} aria-labelledby="home-training-title">
       <div className={styles.heroTop}><span className={styles.trainingBadge}><span/>{active ? "WORKOUT IN PROGRESS" : "YOUR NEXT SESSION"}</span><span className={styles.heroIcon}><Dumbbell size={24}/></span></div>
       <h2 id="home-training-title">{active ? active.name || "Your workout" : history.length ? "Keep your momentum." : "Make today count."}</h2>
       <p>{active ? `${active.exercises.length} exercises · ${activeTotals?.sets ?? 0} sets logged. Pick up where you left off.` : history.length ? "A little progress, one session at a time. Your log is ready." : "Start simple. Choose your exercises and log your first sets."}</p>
       <Link className={styles.primary} href="/workout">{active ? <Play size={18} fill="currentColor"/> : <Dumbbell size={19}/>}<span>{active ? "Resume workout" : "Start a workout"}</span><ArrowRight size={19}/></Link>
-      {!active && <Link className={styles.heroSecondary} href="/programs">Want a plan? Explore programs <ChevronRight size={14}/></Link>}
+      {!active && <div className={styles.heroLinks}><Link className={styles.heroSecondary} href="/programs">Explore programs <ChevronRight size={14}/></Link><Link className={styles.heroSecondary} href="/routines">Your saved routines <ChevronRight size={14}/></Link></div>}
     </section>
     <section className={styles.weekSummary} aria-label="This week’s training summary">
       <div className={styles.sectionLabel}><h2 id="home-week-heading">This week</h2><Link href="/progress">View progress <ArrowRight size={14}/></Link></div>
@@ -79,11 +86,14 @@ export default function DashboardPage() {
         <Link href="/progress" className={styles.metric} aria-describedby="home-week-heading"><span className={`${styles.metricIcon} ${styles.gold}`}><Award size={17} aria-hidden="true"/></span><strong>{dataReady ? weeklyRecords : "—"}</strong>{" "}<span>Records</span></Link>
       </div>
     </section>
+    <section className={styles.recent} aria-label="Bodyweight check-in"><div className={styles.sectionHeading}><div><span>BODY COMPOSITION</span><h2>Keep your trend honest</h2></div><QuickWeightModal units={preferences.units}/></div></section>
+    {dataReady && <WorkoutActivitySummary userId={user?.id} workouts={history} units={preferences.units} compact/>}
     <div className={styles.middle}>{!error && <TodayOverview workouts={history} active={Boolean(active)} ready={dataReady}/>}<QuickStart active={active} lastCompleted={history[0] ?? null} ready={dataReady}/></div>
     <section className={styles.recent} aria-labelledby="recent-training-title">
       <div className={styles.sectionHeading}><div><span>YOUR TRAINING LOG</span><h2 id="recent-training-title">Recent sessions</h2></div><Link href="/history">View all <ArrowRight size={15}/></Link></div>
       {!ready ? <div className={styles.loading} role="status"><span/><span/><span/><p>Loading your training log…</p></div> : error ? <p className={styles.emptyDescription}>Your saved sessions will appear here when your training log loads.</p> : history.length === 0 ? <div className={styles.empty}><span className={styles.emptyIcon}><History size={25}/></span><h3>A fresh start.</h3><p>Your completed workouts will appear here. Already have a training log?</p><Link href="/profile/data"><Upload size={16}/> Import from Hevy or CSV <ArrowRight size={15}/></Link></div> : <div className={styles.feed}>{history.slice(0, 3).map(workout => <WorkoutFeedCard key={workout.id} workout={workout} athlete={athlete} records={recordsByWorkout.get(workout.id) ?? 0}/>)}</div>}
     </section>
+    <BodyHeatmap/>
     <p className={styles.footerNote}>Built for the work. One session at a time.</p>
   </main>;
 }

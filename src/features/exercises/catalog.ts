@@ -18,7 +18,7 @@ export type Exercise = {
 };
 
 // Built-in catalog seed; exercise history and workout state are stored separately.
-export const exerciseCatalog: Exercise[] = [
+const exerciseCatalogSeed: Exercise[] = [
   {id:"power-clean",name:"Power Clean",muscle:"Compound",equipment:"Barbell",pattern:"Olympic",category:"Olympic",aliases:["clean"],restSeconds:180},
   {id:"power-snatch",name:"Power Snatch",muscle:"Compound",equipment:"Barbell",pattern:"Olympic",category:"Olympic",aliases:["snatch"],restSeconds:180},
   {id:"rowing-machine",name:"Rowing Machine",muscle:"Cardio",equipment:"Machine",pattern:"Cardio",category:"Cardio",aliases:["erg","rower"],restSeconds:60},
@@ -126,6 +126,20 @@ export const exerciseCatalog: Exercise[] = [
   { id: "cable-hip-adduction", name: "Cable Hip Adduction", muscle: "Adductors", equipment: "Cable", pattern: "Hip adduction", aliases: [], restSeconds: 75 },
   { id: "copenhagen-side-plank", name: "Copenhagen Side Plank", muscle: "Adductors", equipment: "Bench", pattern: "Hip adduction", aliases: ["copenhagen plank"], restSeconds: 75 },
 ];
+
+const primaryMuscleByLabel: Record<string, string> = {
+  chest: "chest", "upper chest": "chest", "lower chest": "chest", lats: "lats", "upper back": "upper_back", traps: "traps",
+  "front delts": "shoulders", "side delts": "shoulders", "rear delts": "shoulders", shoulders: "shoulders", biceps: "biceps", triceps: "triceps", forearms: "forearms", abs: "abs", obliques: "abs", quads: "quads", hamstrings: "hamstrings", glutes: "glutes", calves: "calves", erectors: "upper_back", adductors: "quads",
+};
+const secondaryMuscleByPrimary: Record<string, string[]> = {
+  chest: ["Front delts", "Triceps"], lats: ["Biceps", "Forearms"], upper_back: ["Traps", "Biceps"], traps: ["Shoulders", "Upper back"], shoulders: ["Triceps", "Traps"],
+  biceps: ["Forearms"], triceps: ["Shoulders"], forearms: ["Biceps"], abs: ["Glutes"], quads: ["Glutes"], hamstrings: ["Glutes"], glutes: ["Hamstrings"], calves: [],
+};
+export const exerciseCatalog: Exercise[] = exerciseCatalogSeed.map((exercise) => {
+  const normalized = primaryMuscleByLabel[exercise.muscle.trim().toLowerCase()] ?? (exercise.id === "power-clean" ? "quads" : exercise.id === "power-snatch" ? "shoulders" : undefined);
+  const primary = exercise.primaryMuscles?.[0] ?? (normalized ? exercise.muscle === "Compound" ? normalized === "quads" ? "Quads" : "Shoulders" : exercise.muscle : undefined);
+  return { ...exercise, ...(primary ? { primaryMuscles: [primary] } : {}), secondaryMuscles: exercise.secondaryMuscles ?? (normalized ? secondaryMuscleByPrimary[normalized] ?? [] : []) };
+});
 
 export function searchExercises(query: string, catalog: Exercise[] = exerciseCatalog): Exercise[] {
   const normalized = query.trim().toLocaleLowerCase();

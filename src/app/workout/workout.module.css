@@ -29,6 +29,9 @@
 .saveStatus svg { color: #6da5fc; }
 .saveError { color: #f2b46d; }
 .saveError svg { color: inherit; }
+.offlineStatus { color: #f0b08e; }
+.audioToggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 10px; border: 1px solid var(--workout-border); border-radius: 9px; color: var(--workout-muted); background: var(--workout-control); font-size: 11px; white-space: nowrap; }
+.audioToggle > span { display: grid; place-items: center; color: #79adff; }
 .finish, .primary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 0 20px; border: 0; border-radius: 12px; background: #2563eb; color: #fff; font-size: 15px; font-weight: 650; transition: background .15s, transform .15s; }
 .finish { min-height: 44px; padding-inline: 15px; }
 .finish:hover:not(:disabled), .primary:hover:not(:disabled) { background: #1d4ed8; }
@@ -107,6 +110,10 @@
 .shell :global(.set-table-head) { min-height: 35px; color: var(--workout-muted); font: 10px Arial, sans-serif; letter-spacing: .05em; }
 .shell :global(.set-row) { min-height: 62px; padding-block: 8px; border-color: var(--workout-border); border-radius: 7px; }
 .shell :global(.set-index) { color: var(--workout-muted); font: 600 14px Arial, sans-serif; }
+.shell :global(.set-index) { display:flex; align-items:center; justify-content:center; }
+.shell :global(.set-index-label) { display:none; }
+.completionShareActions { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:15px; }
+.completionShareActions > * { min-height:44px; }
 .shell :global(.set-index-label), .shell :global(.stepper-label), .shell :global(.set-effort > span) { display: none; }
 .shell :global(.set-effort) { min-width: 0; }
 .shell :global(.set-effort select) { width: 100%; }
@@ -151,6 +158,9 @@
 .deleteWorkout { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 13px; border: 1px solid #74424c; border-radius: 10px; color: #f49aa5; background: #e7586710; font-size: 13px; }
 .sessionFootnote { display: flex; align-items: flex-start; gap: 7px; margin: 20px 0 0; color: var(--workout-muted); font-size: 12px; line-height: 1.6; }
 .sessionFootnote svg { flex-shrink: 0; margin-top: 2px; }
+.setRow { min-height: 80px !important; padding-bottom: 23px !important; }
+.repsStepper { position: relative; overflow: visible !important; }
+.oneRepMax { position: absolute; right: 8px; bottom: -18px; z-index: 2; color: var(--workout-muted); font-size: 10px; line-height: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .restTimer { position: sticky; top: 82px; z-index: 7; display: flex; align-items: center; gap: 12px; width: 100%; margin: 16px 0 0; padding: 12px 15px; border: 1px solid #3b5f94; border-radius: 14px; background: var(--workout-card); box-shadow: 0 6px 24px #0003; }
 .restTime { display: flex; align-items: center; gap: 10px; }
 .restTime > svg { flex-shrink: 0; color: #79adff; }
@@ -199,10 +209,12 @@
   .shell :global(.exercise-title h3) { font-size: 17px; }
   .shell :global(.set-table-head) { display: none; }
   .shell :global(.set-row) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-block: 16px; border-radius: 0; }
+  .shell :global(.set-row).setRow { min-height: 0 !important; padding-bottom: 34px !important; }
   .shell :global(.set-index) { grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 5px; }
   .shell :global(.set-index-label) { display: inline; font-weight: 400; }
   .shell :global(.set-row-actions) { grid-column: 2; grid-row: 1; justify-self: end; gap: 4px; }
   .shell :global(.number-stepper) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; grid-row: 2; padding: 8px; background: var(--workout-control); overflow: hidden; }
+  .shell :global(.number-stepper).repsStepper { overflow: visible; }
   .shell :global(.stepper-label) { display: block; grid-column: 1 / -1; grid-row: 1; padding-bottom: 6px; text-align: center; color: var(--workout-muted); font-size: 11px; }
   .shell :global(.number-stepper > input) { grid-column: 1 / -1; grid-row: 2; min-height: 48px; margin-bottom: 6px; font-size: 22px !important; }
   .shell :global(.number-stepper > button) { display: grid; place-items: center; grid-row: 3; min-width: 44px; min-height: 44px; width: 100%; padding: 0; border: 1px solid var(--workout-border); border-radius: 7px; background: var(--workout-card); color: var(--workout-text); font-size: 23px; }

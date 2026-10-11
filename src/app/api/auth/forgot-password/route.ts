@@ -1,58 +1,36 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getDatabasePool } from "@/lib/db/pool";
-import { verify } from "otplib";
-import { hashPassword } from "@/lib/auth/password";
+import { getRequestIp, isMfaRateLimited, makePasswordReset, revokePasswordReset } from "@/lib/auth/mfa";
+import { sendPasswordResetEmail } from "@/lib/auth/mail";
+import { readProfileBody, ProfileInputError } from "@/lib/auth/avatar";
+
+export const runtime = "nodejs";
+const requestSchema = z.object({ email: z.string().trim().email().max(254) });
+const generic = { message: "If an ARCUS account matches that email, a reset link will be sent." };
 
 export async function POST(request: Request) {
   try {
-    const { email, code, newPassword } = await request.json();
-    
-    if (!email || !code || !newPassword) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-
-    const pool = getDatabasePool();
-    
-    // Find user by normalized email (or username)
-    const normalizedEmail = email.trim().toLowerCase();
-    const result = await pool.query(
-      `SELECT id, mfa_secret FROM public.arcus_accounts 
-       WHERE email_normalized = $1 OR username_normalized = $1`,
-      [normalizedEmail]
+    const parsed = requestSchema.safeParse(await readProfileBody(request));
+    if (!parsed.success) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+    if (await isMfaRateLimited("reset-request", "all-accounts", getRequestIp(request))) return NextResponse.json(generic);
+    const result = await getDatabasePool().query<{ id: string; email: string }>(
+      "select id,email from public.arcus_accounts where email_normalized=$1 and is_banned=false limit 1",
+      [parsed.data.email.toLowerCase()],
     );
-
-    if (result.rows.length === 0) {
-      // Don't leak whether user exists, just say invalid
-      return NextResponse.json({ error: "Invalid request or MFA code." }, { status: 400 });
+    if (result.rows[0]) {
+      const reset = await makePasswordReset(result.rows[0].id);
+      const base = process.env.SITE_URL?.trim() || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
+      const url = new URL("/auth/reset-password", base);
+      url.searchParams.set("token", reset.token);
+      try { await sendPasswordResetEmail(result.rows[0].email, url.toString()); }
+      catch (error) { await revokePasswordReset(reset.tokenHash); throw error; }
     }
-
-    const user = result.rows[0];
-    
-    if (!user.mfa_secret) {
-      return NextResponse.json({ error: "MFA is not enabled for this account." }, { status: 400 });
-    }
-
-    const verifyResult = await verify({ token: code, secret: user.mfa_secret });
-    
-    if (!verifyResult.valid) {
-      return NextResponse.json({ error: "Invalid MFA code." }, { status: 400 });
-    }
-
-    // Hash the new password and update
-    const passwordHash = await hashPassword(newPassword);
-    
-    await pool.query(
-      `UPDATE public.arcus_accounts SET password_hash = $1 WHERE id = $2`,
-      [passwordHash, user.id]
-    );
-
-    // Optionally delete all existing sessions
-    await pool.query(`DELETE FROM public.arcus_sessions WHERE account_id = $1`, [user.id]);
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json(generic);
   } catch (error) {
-    console.error("Forgot Password Error:", error);
-    return NextResponse.json({ error: "Failed to reset password." }, { status: 500 });
+    if (error instanceof ProfileInputError) return NextResponse.json({ error: error.message }, { status: error.status });
+    console.error("Password reset request failed", error);
+    // Keep account existence and mail-provider configuration indistinguishable to callers.
+    return NextResponse.json(generic);
   }
 }
-
