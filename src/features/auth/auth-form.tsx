@@ -47,8 +47,16 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setLoginStatus("success");
     try { if (typeof navigator !== "undefined") navigator.vibrate?.(50); } catch { /* Haptics are optional. */ }
     showToast(message);
+    const requestedDestination = new URLSearchParams(window.location.search).get("next");
+    let destination = "/home";
+    if (requestedDestination) {
+      try {
+        const candidate = new URL(requestedDestination, window.location.origin);
+        if (candidate.origin === window.location.origin) destination = `${candidate.pathname}${candidate.search}${candidate.hash}`;
+      } catch { /* Ignore invalid or external redirect targets. */ }
+    }
     navigationTimer.current = setTimeout(() => {
-      router.push("/home");
+      router.push(destination);
     }, 250);
   }
 
