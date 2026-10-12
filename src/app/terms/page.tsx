@@ -2,7 +2,7 @@ import Link from "next/link";
 import { pageMetadata } from "@/lib/site-metadata";
 import styles from "../legal.module.css";
 
-const contactEmail = process.env.PUBLIC_CONTACT_EMAIL?.trim() || "buildarcus@gmail.com";
+const contactEmail = process.env.CONTACT_EMAIL?.trim() || "buildarcus@gmail.com";
 const governingLaw = process.env.LEGAL_GOVERNING_LAW?.trim() || "India";
 
 export const metadata = pageMetadata("Terms of Service | ARCUS", "Read the ARCUS account, acceptable-use, service availability, and fitness safety terms.", true);

@@ -3,7 +3,7 @@ import { CookiePreferencesButton } from "@/components/shared/cookie-consent";
 import { pageMetadata } from "@/lib/site-metadata";
 import styles from "../legal.module.css";
 
-const contactEmail = process.env.PUBLIC_CONTACT_EMAIL?.trim() || "buildarcus@gmail.com";
+const contactEmail = process.env.CONTACT_EMAIL?.trim() || "buildarcus@gmail.com";
 
 export const metadata = pageMetadata("Privacy Policy | ARCUS", "Learn what ARCUS stores, how workout and account data are used, which service providers process it, and how to request access or deletion.", true);
 
