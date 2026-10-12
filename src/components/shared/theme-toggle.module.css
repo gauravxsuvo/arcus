@@ -30,10 +30,15 @@
   opacity: 0;
 }
 
-.icon { display: block; width: 24px; height: 24px; flex: 0 0 auto; color: currentColor; overflow: visible; pointer-events: none; transform-origin: center; }
-.glyph { transform-box: fill-box; transform-origin: center; }
+.icon { display: block; width: 24px; height: 24px; flex: 0 0 auto; color: currentColor; overflow: visible; pointer-events: none; transform-origin: center; transition: transform .24s cubic-bezier(.2,.8,.2,1); }
+.icon[data-dark="true"] { transform: rotate(-12deg); }
+.glyph { transform-box: fill-box; transform-origin: center; transition: opacity .2s ease, transform .24s cubic-bezier(.2,.8,.2,1); }
+.sunGlyph { opacity: 1; transform: scale(1); }
+.moonGlyph { opacity: 0; transform: scale(.72); }
+.icon[data-dark="true"] .sunGlyph { opacity: 0; transform: scale(.72); }
+.icon[data-dark="true"] .moonGlyph { opacity: 1; transform: scale(1); }
 .toggle:has(.checkbox:focus-visible) { outline: 2px solid #5798ff; outline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .toggle { transition-duration: .01ms; }
+  .toggle,.icon,.glyph { transition-duration: .01ms; }
 }
