@@ -9,7 +9,7 @@ export type PublicUser = { id: string; name: string; handle: string; avatarUrl: 
 export type FeedWorkout = {
   id: string; ownerId: string; user: PublicUser; title: string; completedAt: string;
   durationMinutes: number; volumeKg: number; exercises: { name: string; sets: number }[];
-  likes: number; comments: number; liked: boolean;
+  totalSets: number; prsCount: number; likes: number; comments: number; liked: boolean;
 };
 export type FeedCursor = { updatedAt: string; id: string; ownerId: string };
 export type FeedWorkoutPage = { posts: FeedWorkout[]; nextCursor: FeedCursor | null };

@@ -1,4 +1,5 @@
 "use server";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { getCurrentAccount as auth } from "@/lib/auth/server";
 import { getDatabasePool } from "@/lib/db/pool";
 import { commentSchema, followSchema, likeSchema, searchSchema, targetSchema, type PublicUser, type FeedComment, type FeedWorkout, type FeedWorkoutPage } from "./model";
@@ -8,39 +9,64 @@ import { z } from "zod";
 const identity = `a.id as "userId", a.display_name as name, a.username as handle,
   case when a.avatar_object_key is not null or a.avatar_image is not null then '/api/social/avatar?id=' || a.id::text else null end as "avatarUrl"`;
 const active = `a.is_banned=false and (a.is_suspended=false or a.suspended_until<=now())`;
-const publicWorkoutPredicate = `w.is_public=true and w.payload->>'status'='completed' and ${active}`;
+const publicWorkoutPredicate = `w.is_public=true and w.completed_at is not null and ${active}`;
 
 const feedPageSchema = z.object({
   tab: z.enum(["following", "discover"]).default("discover"),
   cursor: z.object({ updatedAt: z.string().datetime(), id: z.string().uuid(), ownerId: z.string().uuid() }).strict().nullable().optional(),
 }).strict();
 
+type FeedDbRow = {
+  id: string; ownerId: string; cursorUpdatedAt: string; userId: string; name: string; handle: string; avatarUrl: string | null;
+  title: string; completedAt: string; startedAt: string; exercises: { name: string; sets: number }[];
+  volume: number | string; totalSets: number; prs: number; likes: number; comments: number; liked?: boolean; following?: boolean;
+};
+
+async function queryFeedRows(mode: "discover" | "following", viewerId: string | null, cursorUpdatedAt: string | null, cursorId: string | null, cursorOwnerId: string | null): Promise<FeedDbRow[]> {
+  const { rows } = await getDatabasePool().query<FeedDbRow>(`
+    with recent as (
+      select w.id,w.account_id,w.name,w.started_at,w.completed_at,w.exercise_summary,w.updated_at,w.total_volume_kg,w.total_sets_count,w.prs_count,w.likes_count,w.comments_count
+      from public.arcus_workouts w join public.arcus_accounts a on a.id=w.account_id
+      where ${publicWorkoutPredicate}
+        and ($2::text='discover' or exists(select 1 from public.arcus_follows f where f.follower_id=$1::uuid and f.following_id=w.account_id))
+        and ($3::timestamptz is null or (w.updated_at,w.id,w.account_id)<($3::timestamptz,$4::uuid,$5::uuid))
+      order by w.updated_at desc,w.id desc,w.account_id desc limit 21
+    ) select w.id,w.account_id as "ownerId",w.updated_at::text as "cursorUpdatedAt",
+      ${identity},w.name as title,w.completed_at::text as "completedAt",w.started_at::text as "startedAt",
+      w.exercise_summary as exercises,
+      w.total_volume_kg as volume,w.total_sets_count as "totalSets",w.prs_count as prs,
+      w.likes_count as likes,w.comments_count as comments
+    from recent w join public.arcus_accounts a on a.id=w.account_id
+    order by w.updated_at desc,w.id desc,w.account_id desc
+    `, [viewerId, mode, cursorUpdatedAt, cursorId, cursorOwnerId]);
+  return rows;
+}
+
+const getCachedDiscoverRows = unstable_cache(
+  (cursorUpdatedAt: string | null, cursorId: string | null, cursorOwnerId: string | null) => queryFeedRows("discover", null, cursorUpdatedAt, cursorId, cursorOwnerId),
+  ["arcus-public-discover-feed-v2"],
+  { revalidate: 30, tags: ["feed"] },
+);
+
 export async function getFeedWorkoutsPage(input: unknown = {}): Promise<FeedWorkoutPage> {
   const session = await auth();
   const { tab: mode, cursor = null } = feedPageSchema.parse(input);
   if (mode === "following" && !session) return { posts: [], nextCursor: null };
-  const { rows } = await getDatabasePool().query(`
-    with recent as (
-      select w.id,w.account_id,w.payload,w.updated_at from public.arcus_workouts w
-      join public.arcus_accounts a on a.id=w.account_id where ${publicWorkoutPredicate}
-      and ($2::text='discover' or exists(select 1 from public.arcus_follows f where f.follower_id=$1::uuid and f.following_id=w.account_id))
-      and ($3::timestamptz is null or (w.updated_at,w.id,w.account_id)<($3::timestamptz,$4::uuid,$5::uuid))
-      order by w.updated_at desc,w.id desc,w.account_id desc limit 21
-    ) select w.id,w.account_id as "ownerId",w.updated_at as "cursorUpdatedAt",${identity},
-      w.payload->>'name' as title,w.payload->>'completedAt' as "completedAt",w.payload->>'startedAt' as "startedAt",
-      coalesce((select jsonb_agg(jsonb_build_object('name',e->>'name','sets',
-        (select count(*) from jsonb_array_elements(e->'sets') s where s->>'completed'='true')))
-        from jsonb_array_elements(w.payload->'exercises') e),'[]') as exercises,
-      coalesce((select sum(coalesce((s->>'weight')::numeric,0)*coalesce((s->>'reps')::numeric,0))
-        from jsonb_array_elements(w.payload->'exercises') e cross join lateral jsonb_array_elements(e->'sets') s
-        where s->>'completed'='true' and coalesce(s->>'setType','working')<>'warmup'
-          and coalesce(e->>'trackingType','strength')<>'cardio'),0) as volume,
-      (select count(*)::int from public.arcus_workout_likes l where l.workout_id=w.id and l.workout_owner_id=w.account_id) as likes,
-      (select count(*)::int from public.arcus_workout_comments c where c.workout_id=w.id and c.workout_owner_id=w.account_id) as comments,
-      exists(select 1 from public.arcus_workout_likes l where l.workout_id=w.id and l.workout_owner_id=w.account_id and l.account_id=$1::uuid) as liked,
-      exists(select 1 from public.arcus_follows f where f.follower_id=$1::uuid and f.following_id=a.id) as following
-    from recent w join public.arcus_accounts a on a.id=w.account_id order by w.updated_at desc,w.id desc,w.account_id desc
-  `, [session?.id ?? null, mode, cursor?.updatedAt ?? null, cursor?.id ?? null, cursor?.ownerId ?? null]);
+  const cursorArgs = [cursor?.updatedAt ?? null, cursor?.id ?? null, cursor?.ownerId ?? null] as const;
+  const rows = mode === "discover"
+    ? await getCachedDiscoverRows(...cursorArgs)
+    : await queryFeedRows(mode, session!.id, ...cursorArgs);
+  if (session && rows.length) {
+    const owners = [...new Set(rows.map(row => row.ownerId))];
+    const workoutIds = rows.map(row => row.id);
+    const [likes, follows] = await Promise.all([
+      getDatabasePool().query<{ workout_owner_id: string; workout_id: string }>("select workout_owner_id,workout_id from public.arcus_workout_likes where account_id=$1 and workout_owner_id=any($2::uuid[]) and workout_id=any($3::uuid[])", [session.id, owners, workoutIds]),
+      getDatabasePool().query<{ following_id: string }>("select following_id from public.arcus_follows where follower_id=$1 and following_id=any($2::uuid[])", [session.id, owners]),
+    ]);
+    const likedKeys = new Set(likes.rows.map(row => `${row.workout_owner_id}:${row.workout_id}`));
+    const followingIds = new Set(follows.rows.map(row => row.following_id));
+    for (const row of rows) { row.liked = likedKeys.has(`${row.ownerId}:${row.id}`); row.following = followingIds.has(row.ownerId); }
+  }
   const hasMore = rows.length > 20;
   const pageRows = rows.slice(0, 20);
   const last = pageRows.at(-1);
@@ -49,10 +75,10 @@ export async function getFeedWorkoutsPage(input: unknown = {}): Promise<FeedWork
   } : null;
   return { posts: pageRows.map(row => ({
     id: row.id,ownerId: row.ownerId,
-    user: { id: row.userId,name: row.name,handle: row.handle,avatarUrl: row.avatarUrl,following: row.following },
+    user: { id: row.userId,name: row.name,handle: row.handle,avatarUrl: row.avatarUrl,following: row.following ?? false },
     title: row.title,completedAt: row.completedAt,
     durationMinutes: Math.max(0,Math.round((Date.parse(row.completedAt)-Date.parse(row.startedAt))/60000)) || 0,
-    volumeKg: Number(row.volume),exercises: row.exercises,likes: row.likes,comments: row.comments,liked: row.liked,
+    volumeKg: Number(row.volume),exercises: row.exercises,totalSets: row.totalSets,prsCount: row.prs,likes: row.likes,comments: row.comments,liked: row.liked ?? false,
   })), nextCursor };
 }
 
@@ -92,13 +118,24 @@ export async function setWorkoutLike(input: unknown) {
   const session = await auth(); if (!session) throw new Error("Unauthorized");
   const data = likeSchema.parse(input);
   await publicWorkout(data.ownerId,data.workoutId);
-  if (data.liked) {
-    const result = await getDatabasePool().query(`insert into public.arcus_workout_likes(workout_owner_id,workout_id,account_id)
-      select w.account_id,w.id,$3 from public.arcus_workouts w join public.arcus_accounts a on a.id=w.account_id
-      where w.account_id=$1 and w.id=$2 and ${publicWorkoutPredicate}
-      on conflict (workout_owner_id,workout_id,account_id) do update set account_id=excluded.account_id returning workout_id`, [data.ownerId,data.workoutId,session.id]);
-    if (!result.rowCount) throw new Error("Workout unavailable.");
-  } else await getDatabasePool().query("delete from public.arcus_workout_likes where workout_owner_id=$1 and workout_id=$2 and account_id=$3", [data.ownerId,data.workoutId,session.id]);
+  const pool = getDatabasePool();
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    if (data.liked) {
+      const result = await client.query(`insert into public.arcus_workout_likes(workout_owner_id,workout_id,account_id)
+        select w.account_id,w.id,$3 from public.arcus_workouts w join public.arcus_accounts a on a.id=w.account_id
+        where w.account_id=$1 and w.id=$2 and ${publicWorkoutPredicate}
+        on conflict (workout_owner_id,workout_id,account_id) do nothing returning workout_id`, [data.ownerId,data.workoutId,session.id]);
+      if (result.rowCount) await client.query("update public.arcus_workouts set likes_count=likes_count+1 where id=$1 and account_id=$2", [data.workoutId,data.ownerId]);
+    } else {
+      const result = await client.query("delete from public.arcus_workout_likes where workout_owner_id=$1 and workout_id=$2 and account_id=$3 returning workout_id", [data.ownerId,data.workoutId,session.id]);
+      if (result.rowCount) await client.query("update public.arcus_workouts set likes_count=greatest(0,likes_count-1) where id=$1 and account_id=$2", [data.workoutId,data.ownerId]);
+    }
+    await client.query("commit");
+  } catch (error) { await client.query("rollback").catch(() => undefined); throw error; }
+  finally { client.release(); }
+  revalidateTag("feed");
 }
 export async function getWorkoutComments(input: unknown): Promise<FeedComment[]> {
   const data = targetSchema.parse(input);
@@ -112,18 +149,36 @@ export async function getWorkoutComments(input: unknown): Promise<FeedComment[]>
 export async function addWorkoutComment(input: unknown) {
   const session = await auth(); if (!session) throw new Error("Unauthorized");
   const data = commentSchema.parse(input);
-  const result = await getDatabasePool().query(`insert into public.arcus_workout_comments(workout_owner_id,workout_id,account_id,body)
-    select w.account_id,w.id,$3,$4 from public.arcus_workouts w join public.arcus_accounts a on a.id=w.account_id
-    where w.account_id=$1 and w.id=$2 and ${publicWorkoutPredicate} returning id`, [data.ownerId,data.workoutId,session.id,data.text]);
-  if (!result.rowCount) throw new Error("Workout unavailable.");
+  const pool = getDatabasePool();
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const result = await client.query(`insert into public.arcus_workout_comments(workout_owner_id,workout_id,account_id,body)
+      select w.account_id,w.id,$3,$4 from public.arcus_workouts w join public.arcus_accounts a on a.id=w.account_id
+      where w.account_id=$1 and w.id=$2 and ${publicWorkoutPredicate} returning id`, [data.ownerId,data.workoutId,session.id,data.text]);
+    if (!result.rowCount) throw new Error("Workout unavailable.");
+    await client.query("update public.arcus_workouts set comments_count=comments_count+1 where id=$1 and account_id=$2", [data.workoutId,data.ownerId]);
+    await client.query("commit");
+  } catch (error) { await client.query("rollback").catch(() => undefined); throw error; }
+  finally { client.release(); }
+  revalidateTag("feed");
 }
 export async function deleteWorkoutComment(input: unknown) {
   const session = await auth(); if (!session) throw new Error("Unauthorized");
   const id = z.string().uuid().parse(input);
   const pool = getDatabasePool();
-  const owner = await pool.query("select account_id from public.arcus_workout_comments where id=$1", [id]);
-  if (owner.rows[0]?.account_id !== session.id) throw new Error("Unauthorized");
-  await pool.query("delete from public.arcus_workout_comments where id=$1 and account_id=$2", [id,session.id]);
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const owner = await client.query<{ account_id: string; workout_owner_id: string; workout_id: string }>("select account_id,workout_owner_id,workout_id from public.arcus_workout_comments where id=$1", [id]);
+    if (owner.rows[0]?.account_id !== session.id) throw new Error("Unauthorized");
+    const target = owner.rows[0];
+    const deleted = await client.query("delete from public.arcus_workout_comments where id=$1 and account_id=$2 returning id", [id,session.id]);
+    if (deleted.rowCount) await client.query("update public.arcus_workouts set comments_count=greatest(0,comments_count-1) where id=$1 and account_id=$2", [target.workout_id,target.workout_owner_id]);
+    await client.query("commit");
+  } catch (error) { await client.query("rollback").catch(() => undefined); throw error; }
+  finally { client.release(); }
+  revalidateTag("feed");
 }
 export async function setWorkoutVisibility(input: unknown) {
   const session = await auth(); if (!session) throw new Error("Unauthorized");
@@ -132,4 +187,5 @@ export async function setWorkoutVisibility(input: unknown) {
   const owner = await pool.query("select account_id from public.arcus_workouts where id=$1 and account_id=$2", [data.workoutId,data.ownerId]);
   if (owner.rows[0]?.account_id !== session.id) throw new Error("Unauthorized");
   await pool.query("update public.arcus_workouts set is_public=$3 where id=$1 and account_id=$2", [data.workoutId,session.id,data.isPublic]);
+  revalidateTag("feed");
 }

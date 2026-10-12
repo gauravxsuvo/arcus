@@ -30,6 +30,7 @@
     "db:migrate:weight": "node scripts/migrate-weight-logs.mjs",
     "db:migrate:admin-catalog": "node scripts/migrate-admin-catalog.mjs",
     "db:migrate:workout-performance": "node scripts/migrate-workout-performance.mjs",
+    "db:migrate:social-performance": "node scripts/migrate-social-feed-performance.mjs",
     "admin:configure": "node scripts/configure-admin.mjs",
     "db:bridge": "node scripts/portways-db-bridge.mjs --gateway wss://db.portways.app/v1"
   },
